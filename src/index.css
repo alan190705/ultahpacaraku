@@ -6823,3 +6823,63 @@ button:focus-visible,
   .sb-album-wrap { width: min(88vw, 760px); height: min(72vh, 520px); }
 }
 
+/* ========================================================================== */
+/* === 31. FINAL MOBILE STABILITY & ANTI-AI-SLOP PATCH ====================== */
+/* ========================================================================== */
+
+/* 1. Perbaikan Bug Viewport di Mobile (Address Bar) */
+.slide-mode {
+  height: 100vh; /* Fallback */
+  height: -webkit-fill-available; /* Fix iOS */
+  height: 100dvh;
+}
+
+/* 2. Fix Gambar Pecah / Layout Shift (CLS) pada Netflix Section */
+/* Memastikan gambar punya ukuran yang pasti sebelum di-load */
+.netflix-card, .netflix-card-wide, .netflix-card-tall {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-2); /* Placeholder abu-abu sebelum gambar muncul */
+}
+
+.netflix-card img, .netflix-card-wide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 16/9; /* Kunci rasio agar tidak melompat saat loading */
+}
+
+.netflix-card-tall img {
+  aspect-ratio: 2/3;
+}
+
+/* 3. Matikan Animasi Infinite Loop yang Bikin Getar di HP */
+@media (max-width: 768px) {
+  /* Matikan animasi 3D di HP, ganti Slide 2D (jika framer motion gagal deteksi) */
+  .slide {
+    transform: none !important;
+    will-change: opacity !important;
+  }
+
+  /* Hilangkan efek geter pada Lock Screen (Bunga, Kunci, Washi Tape) */
+  .lock-icon, .lock-tape, .lock-sticker {
+    animation: none !important;
+    transform: scale(1) rotate(0deg) !important;
+  }
+
+  /* Optimasi rendering gambar & shadow (Penyebab Frame Drop) */
+  .hero-polaroid, .polaroid, .netflix-card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important; /* Shadow tipis */
+    will-change: auto !important;
+  }
+}
+
+/* 4. Hormati Pengaturan Reduced Motion Pengguna */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

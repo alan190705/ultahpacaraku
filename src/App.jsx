@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CONFIG } from './config'
-import ScrapbookIntro from './components/ScrapbookIntro' // <-- UBAH IMPORT
+import ScrapbookIntro from './components/ScrapbookIntro'
 import LoadingScreen from './components/LoadingScreen'
 import LockScreen from './components/LockScreen'
 import Opening from './components/Opening'
@@ -58,6 +58,9 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+
+  // Deteksi device untuk optimasi performa rendering
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   const next = () => setCurrent((i) => Math.min(i + 1, SECTIONS.length - 1))
   const prev = () => setCurrent((i) => Math.max(i - 1, 0))
@@ -168,7 +171,6 @@ export default function App() {
     }
   }, [opened, current, showPhotoBooth, showSearch, showNotifications, showProfile])
 
-  // === RENDER FLOW (INTEGRASI SCRAPBOOK) ===
   if (!unlocked) {
     return (
       <>
@@ -198,11 +200,18 @@ export default function App() {
         <motion.div
           key={current}
           className={`slide ${section.scrollable ? 'scrollable' : ''}`}
-          initial={{ rotateY: 90, opacity: 0, transformOrigin: 'left center' }}
-          animate={{ rotateY: 0, opacity: 1, transformOrigin: 'left center' }}
-          exit={{ rotateY: -90, opacity: 0, transformOrigin: 'right center' }}
-          transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-          style={{ transformStyle: 'preserve-3d', transformOrigin: 'left center' }}
+          
+          // --- OPTIMASI MOBILE: HAPUS 3D, GUNAKAN 2D SLIDE ---
+          initial={isMobile ? { opacity: 0, x: 50 } : { rotateY: 90, opacity: 0, transformOrigin: 'left center' }}
+          animate={isMobile ? { opacity: 1, x: 0 } : { rotateY: 0, opacity: 1, transformOrigin: 'left center' }}
+          exit={isMobile ? { opacity: 0, x: -50 } : { rotateY: -90, opacity: 0, transformOrigin: 'right center' }}
+          
+          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          
+          style={{ 
+            transformStyle: isMobile ? 'flat' : 'preserve-3d', 
+            transformOrigin: 'left center' 
+          }}
         >
           <SectionComponent onNext={next} />
         </motion.div>
@@ -232,6 +241,7 @@ export default function App() {
         )}
       </div>
 
+      {/* ... (Sisa kode modal, nav ig, dll TETAP SAMA seperti aslinya) ... */}
       {section.id === 'memories' && (
         <nav className="ig-bottom-nav">
           <button type="button" className="ig-nav-btn" aria-label="Home" onClick={() => goTo('hero')}>
