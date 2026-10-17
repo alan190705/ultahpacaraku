@@ -6885,171 +6885,144 @@ button:focus-visible,
 }
 
 /* ========================================================================== */
-/* === 33. SMOOTH MOBILE ANIMATIONS (CAKE, FLAMES, STICKERS) ================ */
+/* === FINAL PREMIUM ANIMATION SYSTEM (MOBILE & DESKTOP) ==================== */
 /* ========================================================================== */
 
-@media (max-width: 768px) {
-  /* 1. ANIMASI KUE & LILIN */
-  .candle-group {
-    animation: smoothCandleSway 2.5s ease-in-out infinite alternate !important;
-    transform-origin: center bottom !important;
+/* 1. RESET & BASE PERFORMANCE */
+* {
+  -webkit-tap-highlight-color: transparent; /* Hilangkan highlight biru saat di-tap di HP */
+}
+
+/* Mencegah Layout Shift (CLS) pada gambar */
+.netflix-card img, 
+.netflix-card-wide img, 
+.netflix-card-tall img,
+.hero-polaroid-img {
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  background-color: var(--bg-2);
+}
+.netflix-card-tall img { aspect-ratio: 2/3; }
+.hero-polaroid-img { aspect-ratio: 1/1; }
+
+/* 2. SCROLL REVEAL & STAGGERED ENTRANCE (Premium Feel) */
+@media (prefers-reduced-motion: no-preference) {
+  /* Animasi muncul dari bawah yang smooth (untuk React reveal) */
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px); /* Jarak 16px sesuai standar premium */
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), 
+                transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Efek Stagger (Muncul Bergantian) untuk Grid/Kartu */
+  .reasons-note, .reward-card, .netflix-card {
+    animation: premiumFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
   
-  .flame-group {
-    animation: smoothFlameFlicker 0.6s ease-in-out infinite alternate !important;
-    transform-origin: center bottom !important;
-  }
+  /* Delay bertingkat agar tidak muncul bersamaan */
+  .reasons-note:nth-child(1), .reward-card:nth-child(1) { animation-delay: 0.05s; }
+  .reasons-note:nth-child(2), .reward-card:nth-child(2) { animation-delay: 0.10s; }
+  .reasons-note:nth-child(3), .reward-card:nth-child(3) { animation-delay: 0.15s; }
+  .reasons-note:nth-child(4), .reward-card:nth-child(4) { animation-delay: 0.20s; }
+}
 
-  .smoke-group {
-    animation: smoothSmokeRise 2s ease-out forwards !important;
-  }
+/* 3. MICRO-INTERACTIONS (Tombol & Sentuhan) */
+/* Efek tombol ditekan: Responsif, tidak menggeser layout, tanpa delay */
+.btn:active, 
+.quiz-opt:active, 
+.lock-key-btn:active, 
+.reward-card:active,
+.ig-nav-btn:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.1s ease !important;
+}
 
-  /* 2. ANIMASI STIKER BACKGROUND */
-  .cake-sticker, .hero-sticker, .opening-sticker, .ourstory-sticker {
-    animation: smoothStickerFloat 4s ease-in-out infinite !important;
+/* Efek Hover hanya untuk perangkat dengan Mouse (Desktop/Laptop) */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(200, 49, 46, 0.15);
   }
-
-  /* 3. ANIMASI POLAROID / FOTO */
-  .hero-polaroid, .ourstory-note, .reasons-note {
-    animation: smoothPopIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
-  }
-
-  /* 4. TOMBOL & INTERAKSI SENTUH */
-  .btn:active, .cake-btn-scrap:active, .quiz-opt:active {
-    transform: scale(0.95) !important;
-    transition: transform 0.1s ease !important;
+  
+  .hero-polaroid:hover {
+    transform: translateY(-4px) rotate(1deg);
   }
 }
 
-/* ==========================================
-   KEYFRAMES (Hanya pakai Transform & Opacity)
-   ========================================== */
+/* 4. SMOOTH MOBILE ANIMATIONS (Kue, Stiker, & Lilin) */
+@media (max-width: 768px) {
+  /* Matikan getaran di Lock Screen */
+  .lock-icon, .lock-tape, .lock-sticker {
+    animation: none !important;
+  }
 
-@keyframes smoothCandleSway {
+  /* Stiker melayang dengan sangat halus (GPU Friendly) */
+  .cake-sticker, .hero-sticker, .ourstory-sticker {
+    animation: smoothFloat 4s ease-in-out infinite alternate !important;
+    will-change: transform;
+  }
+
+  /* Lilin goyang & api berkedip */
+  .candle-group {
+    animation: smoothSway 2.5s ease-in-out infinite alternate !important;
+    transform-origin: center bottom !important;
+  }
+  .flame-group {
+    animation: smoothFlicker 0.6s ease-in-out infinite alternate !important;
+    transform-origin: center bottom !important;
+  }
+}
+
+/* 5. PAGE LOAD / HERO ANIMATIONS (Hanya sekali jalan) */
+.hero-title-scrap, .opening-name-scrap {
+  animation: premiumHeroFade 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ========================================================================== */
+/* === KEYFRAMES (Hanya Transform & Opacity) ================================ */
+/* ========================================================================== */
+
+@keyframes premiumFadeUp {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes premiumHeroFade {
+  0%   { opacity: 0; transform: scale(0.95) translateY(10px); filter: blur(4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@keyframes smoothFloat {
+  0%   { transform: translateY(0) rotate(-2deg); }
+  100% { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes smoothSway {
   0%   { transform: rotate(-2deg); }
   100% { transform: rotate(2deg); }
 }
 
-@keyframes smoothFlameFlicker {
+@keyframes smoothFlicker {
   0%   { transform: scale(1) translateY(0); opacity: 0.9; }
-  50%  { transform: scale(1.1) translateY(-2px); opacity: 1; }
-  100% { transform: scale(0.95) translateY(0); opacity: 0.8; }
-}
-
-@keyframes smoothSmokeRise {
-  0%   { transform: translateY(0) scale(1); opacity: 0.8; }
-  100% { transform: translateY(-30px) scale(2); opacity: 0; }
-}
-
-@keyframes smoothStickerFloat {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-8px) rotate(5deg); }
-}
-
-@keyframes smoothPopIn {
-  0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { transform: scale(1.05) translateY(-2px); opacity: 1; }
 }
 
 /* ========================================================================== */
-/* === 34. DESKTOP ANIMATIONS (HIDUPKAN KEMBALI ANIMASI DI LAPTOP/PC) ======= */
+/* === ACCESSIBILITY: REDUCED MOTION ======================================== */
 /* ========================================================================== */
-
-/* Kita pakai min-width: 769px agar HANYA berjalan di Desktop/Laptop */
-@media (min-width: 769px) {
-  
-  /* 1. Animasi Melayang (Floating) untuk Semua Stiker & Elemen Scrapbook */
-  .hero-sticker, 
-  .cake-sticker, 
-  .ourstory-sticker, 
-  .reasons-sticker, 
-  .countdown-sticker,
-  .lock-sticker,
-  .opening-sticker {
-    animation: desktopStickerFloat 3s ease-in-out infinite alternate !important;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    transform: none !important;
   }
-
-  /* Kasih delay beda-beda biar gak goyang barengan (lebih natural) */
-  .hero-sticker:nth-child(even),
-  .cake-sticker:nth-child(even) {
-    animation-delay: 0.5s !important;
-  }
-  .hero-sticker:nth-child(3n),
-  .cake-sticker:nth-child(3n) {
-    animation-delay: 1s !important;
-  }
-
-  /* 2. Animasi Goyang Halus untuk Kue & Lilin */
-  .candle-group {
-    animation: desktopCandleSway 2s ease-in-out infinite alternate !important;
-    transform-origin: center bottom !important;
-  }
-  
-  .flame-group {
-    animation: desktopFlameFlicker 0.5s ease-in-out infinite alternate !important;
-    transform-origin: center bottom !important;
-  }
-
-  /* 3. Animasi Goyang untuk Washi Tape Lock Screen */
-  .lock-tape, 
-  .opening-tape, 
-  .ourstory-title-tape, 
-  .reasons-title-tape {
-    animation: desktopTapeFloat 2.5s ease-in-out infinite alternate !important;
-  }
-
-  /* 4. Animasi Hover Polaroid & Kartu (Bikin interaktif kalau di-hover mouse) */
-  .hero-polaroid, 
-  .reward-card, 
-  .reasons-note, 
-  .ourstory-note {
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease !important;
-  }
-
-  .hero-polaroid:hover, 
-  .reward-card:hover, 
-  .reasons-note:hover, 
-  .ourstory-note:hover {
-    transform: translateY(-8px) scale(1.02) rotate(1deg) !important;
-    box-shadow: 0 12px 30px rgba(200, 49, 46, 0.15) !important;
-    z-index: 10;
-  }
-
-  /* 5. Efek Detak Jantung (Heartbeat) */
-  .lock-icon, 
-  .cine-heart, 
-  .sb-cover-heart {
-    animation: desktopHeartBeat 1.5s ease-in-out infinite !important;
-  }
-}
-
-/* ==========================================
-   KEYFRAMES KHUSUS DESKTOP
-   ========================================== */
-
-@keyframes desktopStickerFloat {
-  0%   { transform: translateY(0) rotate(-3deg); }
-  100% { transform: translateY(-12px) rotate(3deg); }
-}
-
-@keyframes desktopCandleSway {
-  0%   { transform: rotate(-3deg); }
-  100% { transform: rotate(3deg); }
-}
-
-@keyframes desktopFlameFlicker {
-  0%   { transform: scale(1) translateY(0); opacity: 0.9; }
-  100% { transform: scale(1.1) translateY(-2px); opacity: 1; }
-}
-
-@keyframes desktopTapeFloat {
-  0%   { transform: translateX(-50%) rotate(-3deg) translateY(0); }
-  100% { transform: translateX(-50%) rotate(-1deg) translateY(-4px); }
-}
-
-@keyframes desktopHeartBeat {
-  0%, 100% { transform: scale(1); }
-  15%      { transform: scale(1.1); }
-  30%      { transform: scale(1); }
-  45%      { transform: scale(1.05); }
 }
