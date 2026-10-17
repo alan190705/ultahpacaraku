@@ -6885,58 +6885,68 @@ button:focus-visible,
 }
 
 /* ========================================================================== */
-/* === 32. SMOOTH MOBILE ANIMATIONS (RE-ENABLED) ============================ */
+/* === 33. SMOOTH MOBILE ANIMATIONS (CAKE, FLAMES, STICKERS) ================ */
 /* ========================================================================== */
 
 @media (max-width: 768px) {
-  /* 1. Animasi Masuk untuk Kartu-kartu (Hero, Reasons, Rewards) */
-  /* Efek muncul dari bawah dengan spring halus */
-  .hero-polaroid, .reasons-note, .reward-card, .quiz {
-    animation: mobileFadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
-  }
-
-  @keyframes mobileFadeUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-
-  /* 2. Animasi Melayang (Floating) di Lock Screen yang Super Halus */
-  /* Kita ganti animasi lama dengan versi yang cuma pakai translateY (GPU friendly) */
-  .lock-icon {
-    animation: smoothFloat 3s ease-in-out infinite !important;
+  /* 1. ANIMASI KUE & LILIN */
+  .candle-group {
+    animation: smoothCandleSway 2.5s ease-in-out infinite alternate !important;
+    transform-origin: center bottom !important;
   }
   
-  .lock-tape {
-    animation: smoothTape 3s ease-in-out infinite !important;
+  .flame-group {
+    animation: smoothFlameFlicker 0.6s ease-in-out infinite alternate !important;
+    transform-origin: center bottom !important;
   }
 
-  .lock-sticker {
-    animation: smoothFloat 4s ease-in-out infinite !important;
+  .smoke-group {
+    animation: smoothSmokeRise 2s ease-out forwards !important;
   }
 
-  @keyframes smoothFloat {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); }
+  /* 2. ANIMASI STIKER BACKGROUND */
+  .cake-sticker, .hero-sticker, .opening-sticker, .ourstory-sticker {
+    animation: smoothStickerFloat 4s ease-in-out infinite !important;
   }
 
-  @keyframes smoothTape {
-    0%, 100% { transform: translateX(-50%) rotate(-4deg); }
-    50%      { transform: translateX(-50%) rotate(-2deg) translateY(-2px); }
+  /* 3. ANIMASI POLAROID / FOTO */
+  .hero-polaroid, .ourstory-note, .reasons-note {
+    animation: smoothPopIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both !important;
   }
 
-  /* 3. Animasi Tombol (Feedback saat ditekan) */
-  .btn:active, .lock-key-btn:active, .ig-nav-btn:active {
-    transform: scale(0.92) !important;
+  /* 4. TOMBOL & INTERAKSI SENTUH */
+  .btn:active, .cake-btn-scrap:active, .quiz-opt:active {
+    transform: scale(0.95) !important;
     transition: transform 0.1s ease !important;
   }
+}
 
-  /* 4. Animasi Buka Album Scrapbook (Smooth) */
-  /* Ganti efek 3D jadi efek slide + fade halus */
-  .sb-cover-front {
-    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease !important;
-  }
-  .sb-open .sb-cover-front {
-    transform: translateX(-20%) scale(0.95) !important;
-    opacity: 0 !important;
-  }
+/* ==========================================
+   KEYFRAMES (Hanya pakai Transform & Opacity)
+   ========================================== */
+
+@keyframes smoothCandleSway {
+  0%   { transform: rotate(-2deg); }
+  100% { transform: rotate(2deg); }
+}
+
+@keyframes smoothFlameFlicker {
+  0%   { transform: scale(1) translateY(0); opacity: 0.9; }
+  50%  { transform: scale(1.1) translateY(-2px); opacity: 1; }
+  100% { transform: scale(0.95) translateY(0); opacity: 0.8; }
+}
+
+@keyframes smoothSmokeRise {
+  0%   { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-30px) scale(2); opacity: 0; }
+}
+
+@keyframes smoothStickerFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(5deg); }
+}
+
+@keyframes smoothPopIn {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
