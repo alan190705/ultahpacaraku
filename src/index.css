@@ -6950,3 +6950,106 @@ button:focus-visible,
   0%   { opacity: 0; transform: translateY(20px) scale(0.95); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ========================================================================== */
+/* === 34. DESKTOP ANIMATIONS (HIDUPKAN KEMBALI ANIMASI DI LAPTOP/PC) ======= */
+/* ========================================================================== */
+
+/* Kita pakai min-width: 769px agar HANYA berjalan di Desktop/Laptop */
+@media (min-width: 769px) {
+  
+  /* 1. Animasi Melayang (Floating) untuk Semua Stiker & Elemen Scrapbook */
+  .hero-sticker, 
+  .cake-sticker, 
+  .ourstory-sticker, 
+  .reasons-sticker, 
+  .countdown-sticker,
+  .lock-sticker,
+  .opening-sticker {
+    animation: desktopStickerFloat 3s ease-in-out infinite alternate !important;
+  }
+
+  /* Kasih delay beda-beda biar gak goyang barengan (lebih natural) */
+  .hero-sticker:nth-child(even),
+  .cake-sticker:nth-child(even) {
+    animation-delay: 0.5s !important;
+  }
+  .hero-sticker:nth-child(3n),
+  .cake-sticker:nth-child(3n) {
+    animation-delay: 1s !important;
+  }
+
+  /* 2. Animasi Goyang Halus untuk Kue & Lilin */
+  .candle-group {
+    animation: desktopCandleSway 2s ease-in-out infinite alternate !important;
+    transform-origin: center bottom !important;
+  }
+  
+  .flame-group {
+    animation: desktopFlameFlicker 0.5s ease-in-out infinite alternate !important;
+    transform-origin: center bottom !important;
+  }
+
+  /* 3. Animasi Goyang untuk Washi Tape Lock Screen */
+  .lock-tape, 
+  .opening-tape, 
+  .ourstory-title-tape, 
+  .reasons-title-tape {
+    animation: desktopTapeFloat 2.5s ease-in-out infinite alternate !important;
+  }
+
+  /* 4. Animasi Hover Polaroid & Kartu (Bikin interaktif kalau di-hover mouse) */
+  .hero-polaroid, 
+  .reward-card, 
+  .reasons-note, 
+  .ourstory-note {
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease !important;
+  }
+
+  .hero-polaroid:hover, 
+  .reward-card:hover, 
+  .reasons-note:hover, 
+  .ourstory-note:hover {
+    transform: translateY(-8px) scale(1.02) rotate(1deg) !important;
+    box-shadow: 0 12px 30px rgba(200, 49, 46, 0.15) !important;
+    z-index: 10;
+  }
+
+  /* 5. Efek Detak Jantung (Heartbeat) */
+  .lock-icon, 
+  .cine-heart, 
+  .sb-cover-heart {
+    animation: desktopHeartBeat 1.5s ease-in-out infinite !important;
+  }
+}
+
+/* ==========================================
+   KEYFRAMES KHUSUS DESKTOP
+   ========================================== */
+
+@keyframes desktopStickerFloat {
+  0%   { transform: translateY(0) rotate(-3deg); }
+  100% { transform: translateY(-12px) rotate(3deg); }
+}
+
+@keyframes desktopCandleSway {
+  0%   { transform: rotate(-3deg); }
+  100% { transform: rotate(3deg); }
+}
+
+@keyframes desktopFlameFlicker {
+  0%   { transform: scale(1) translateY(0); opacity: 0.9; }
+  100% { transform: scale(1.1) translateY(-2px); opacity: 1; }
+}
+
+@keyframes desktopTapeFloat {
+  0%   { transform: translateX(-50%) rotate(-3deg) translateY(0); }
+  100% { transform: translateX(-50%) rotate(-1deg) translateY(-4px); }
+}
+
+@keyframes desktopHeartBeat {
+  0%, 100% { transform: scale(1); }
+  15%      { transform: scale(1.1); }
+  30%      { transform: scale(1); }
+  45%      { transform: scale(1.05); }
+}
