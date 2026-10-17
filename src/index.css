@@ -60,23 +60,25 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+
 body {
   font-family: 'Gowun Dodum', sans-serif;
   font-weight: 400;
   background: var(--bg);
   color: var(--text);
-  overflow-x: hidden;
+  overflow-x: clip;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
   background-image:
     linear-gradient(rgba(232, 144, 156, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(232, 144, 156, 0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
-  background-attachment: fixed;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
+
+  /* Jangan gunakan background-attachment: fixed */
+  background-attachment: scroll;
 }
+
 
 /* Grain overlay */
 body::before {
@@ -6821,49 +6823,3 @@ button:focus-visible,
   .sb-album-wrap { width: min(88vw, 760px); height: min(72vh, 520px); }
 }
 
-/* ========================================================================== */
-/* === 30. MOBILE PERFORMANCE PATCH (ANTI-GETER) ============================ */
-/* ========================================================================== */
-
-@media (max-width: 768px) {
-  /* 1. Ringankan Cover Album (Jangan pakai 3D penuh, pakai fade & slide aja) */
-  .sb-cover-front {
-    transition: transform 0.8s ease, opacity 0.6s ease !important;
-    box-shadow: 2px 0 8px rgba(200, 49, 46, 0.1) !important;
-  }
-  
-  .sb-open .sb-cover-front {
-    transform: rotateY(-90deg) !important; /* Kurangi putaran biar gak berat */
-    opacity: 0 !important; /* Tambah fade out biar ilusi buka bukunya tetep dapet */
-  }
-
-  /* 2. Ringankan Foto Polaroid (Matikan shadow tebal & animasi 3D) */
-  .sb-polaroid {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important; /* Shadow tipis */
-    border: 1px solid #f8c8d4 !important;
-    transition: opacity 0.4s ease var(--delay, 0ms), transform 0.4s ease var(--delay, 0ms) !important;
-    will-change: auto !important; /* Biar memori HP gak penuh */
-  }
-
-  /* 3. Ganti animasi teks (clip-path) jadi sekadar fade-in biasa (jauh lebih ringan) */
-  .sb-greet-line {
-    clip-path: none !important;
-    transition: opacity 0.8s ease !important;
-    opacity: 0;
-  }
-  
-  .sb-greet .sb-greet-line {
-    opacity: 1;
-  }
-
-  /* 4. Hapus efek blur (filter blur itu paling berat buat GPU HP) */
-  .sb-morph .sb-album-wrap {
-    filter: none !important; 
-    transform: scale(0.95) !important;
-  }
-  
-  /* 5. Matikan animasi detak jantung di HP (opsional, biar super ringan) */
-  .sb-cover-heart, .sb-loading-heart {
-    animation: none !important;
-  }
-}
