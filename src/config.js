@@ -68,21 +68,21 @@ export const CONFIG = {
 
   // === WATCH IT AGAIN (5 foto, portrait 2:3) ===
   watchAgain: [
-    { src: 'public/images/netflix/net1.jpeg', caption: '' },
-    { src: 'public/images/netflix/net2.jpeg', caption: '' },
-    { src: 'public/images/netflix/net3.jpeg', caption: '' },
-    { src: 'public/images/netflix/net4.jpeg', caption: '' },
-    { src: 'public/images/netflix/net5.jpeg', caption: '' },
+    { src: 'images/netflix/net1.jpeg', caption: '' },
+    { src: 'images/netflix/net2.jpeg', caption: '' },
+    { src: 'images/netflix/net3.jpeg', caption: '' },
+    { src: 'images/netflix/net4.jpeg', caption: '' },
+    { src: 'images/netflix/net5.jpeg', caption: '' },
   ],
 
   // === BECAUSE YOU LOVED (6 foto, wide 16:10) ===
   becauseYouLoved: [
-    { src: 'public/images/netflix/net6.jpeg', caption: '' },
-    { src: 'public/images/netflix/net7.jpeg', caption: '' },
-    { src: 'public/images/netflix/net8.jpeg', caption: '' },
-    { src: 'public/images/netflix/net9.jpeg', caption: '' },
-    { src: 'public/images/netflix/net10.jpeg', caption: '' },
-    { src: 'public/images/netflix/net11.jpeg', caption: '' },
+    { src: 'images/netflix/net6.jpeg', caption: '' },
+    { src: 'images/netflix/net7.jpeg', caption: '' },
+    { src: 'images/netflix/net8.jpeg', caption: '' },
+    { src: 'images/netflix/net9.jpeg', caption: '' },
+    { src: 'images/netflix/net10.jpeg', caption: '' },
+    { src: 'images/netflix/net11.jpeg', caption: '' },
   ],
 
   // === LETTER ===
