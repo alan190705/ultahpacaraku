@@ -7729,3 +7729,115 @@ button,
     animation: mSheetUp 0.38s var(--sheet) both;
   }
 }
+
+/* ========================================================================== */
+/* === 35. SMOOTH FIX — KURANGI BEBAN RENDER & ANIMASI ====================== */
+/* ========================================================================== */
+/*
+  TEMPEL PALING BAWAH, setelah patch #1, #2, dan #3.
+  Tujuan: buang hal-hal yang bikin patah-patah, sisakan animasi yang
+  memang terasa bagus.
+*/
+
+/* ---------- A. BEBAN RENDER TERBESAR ---------- */
+
+/* Grain: layer layar penuh + mix-blend-mode, dirender ulang tiap frame */
+body::before { display: none !important; }
+
+/* Backdrop blur di atas konten yang bergerak = blur dihitung ulang tiap frame */
+.slide-nav .btn,
+.music,
+.ig-topbar,
+.ig-bottom-nav,
+.netflix-navbar,
+.search-overlay,
+.notif-overlay,
+.profile-overlay,
+.comment-overlay,
+.photo-editor-overlay,
+.template-picker-overlay {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* content-visibility + scroll-driven animation = item feed "loncat" saat scroll */
+.ig-post {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+  animation: fadeIn 0.4s ease both !important;
+  animation-timeline: auto !important;
+}
+.ourstory-item {
+  animation: none !important;
+  animation-timeline: auto !important;
+}
+
+/* ---------- B. KURANGI ANIMASI LOOP YANG BERJALAN BERSAMAAN ---------- */
+
+/* Stiker: pakai transform (jalur paling cepat di semua browser), gerak lebih kecil.
+   Lock sticker dikecualikan karena transform-nya dikunci di patch sebelumnya. */
+@keyframes mFloatT {
+  from { transform: translate3d(0, 0, 0) rotate(-3deg); }
+  to   { transform: translate3d(0, -6px, 0) rotate(3deg); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [class*="-sticker"]:not(.lock-sticker) {
+    animation-name: mFloatT !important;
+    animation-duration: 5s !important;
+    will-change: transform;
+  }
+}
+
+/* Hapus idle loop yang tidak perlu */
+.sb-photos .sb-polaroid,
+.cake-svg-scrap,
+.env:not(.open),
+.hero-content-scrap > .hero-polaroid-wrap,
+.letter::after,
+.ig-nav-dot,
+.photobooth-placeholder-icon {
+  animation-iteration-count: 1 !important;
+}
+.hero-content-scrap > .hero-polaroid-wrap {
+  animation: mPolaroid 0.85s var(--spring) calc(var(--i, 0) * 80ms + 80ms) backwards !important;
+}
+.sb-photos .sb-polaroid,
+.cake-svg-scrap,
+.env:not(.open),
+.letter::after,
+.ig-nav-dot,
+.photobooth-placeholder-icon { animation: none !important; }
+
+/* Tape tambahan dari patch #2 (tape judul bawaan tetap jalan) */
+.hero-polaroid-tape,
+.hero-note-tape,
+.cake-tape,
+.loading-tape,
+.lock-tape,
+.photobooth-title-tape,
+.photobooth-camera-tape,
+.photo-editor-tape { animation: none !important; }
+
+/* Kartu Netflix: banyak item dalam baris horizontal, tidak perlu animasi masuk */
+.netflix-card { animation: none !important; }
+
+/* ---------- C. SVG KUE: ANIMASI SVG JALAN DI MAIN THREAD, JADI DIRINGANKAN ---------- */
+@keyframes mFlameLite {
+  from { transform: scale(1, 1); }
+  to   { transform: scale(0.96, 1.08); }
+}
+.candle-group { animation: none !important; }
+.flame-group {
+  animation: mFlameLite 0.8s ease-in-out infinite alternate !important;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.candle-group:nth-child(odd) .flame-group  { animation-duration: 0.7s !important; animation-delay: 0s !important; }
+.candle-group:nth-child(even) .flame-group { animation-duration: 0.9s !important; animation-delay: -0.3s !important; }
+.smoke-group { animation: mSmoke 2s ease-out forwards !important; }
+
+/* ---------- D. ANIMASI MASUK: LEBIH PENDEK & JARAK GESER KECIL ---------- */
+@keyframes mEnter {
+  from { opacity: 0; translate: 0 10px; }
+  to   { opacity: 1; translate: 0 0; }
+}
