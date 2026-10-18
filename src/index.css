@@ -7668,3 +7668,64 @@ button,
   .comment-item { animation: mEnter 0.35s var(--ease-out) backwards; }
   .comment-confirm { animation: mPop 0.3s var(--spring); }
 }
+
+/* ========================================================================== */
+/* === 34. SAMAKAN ANIMASI LAPTOP & HP ====================================== */
+/* ========================================================================== */
+/*
+  TEMPEL PALING BAWAH, setelah patch #1 dan patch #2.
+  Versi HP dijadikan standar dan dipakai di semua ukuran layar.
+*/
+
+/* 1. Transisi slide: fade halus saja di semua layar (tanpa flip 3D) */
+.slide-mode { perspective: none !important; }
+.slide {
+  transform: none !important;
+  will-change: auto !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* 2. Stiker: gerak melayang yang sama di semua layar */
+  [class*="-sticker"] {
+    animation-name: mFloat !important;
+    animation-duration: 4.5s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-direction: alternate !important;
+    animation-iteration-count: infinite !important;
+  }
+  [class*="-sticker-1"] { animation-delay: 0s !important; }
+  [class*="-sticker-2"] { animation-delay: -0.9s !important; }
+  [class*="-sticker-3"] { animation-delay: -1.8s !important; }
+  [class*="-sticker-4"] { animation-delay: -2.7s !important; }
+  [class*="-sticker-5"] { animation-delay: -3.4s !important; }
+  [class*="-sticker-6"] { animation-delay: -1.4s !important; }
+
+  /* 3. Lock screen: tape, ikon, dan stiker sama seperti di HP */
+  .lock-tape {
+    transform: translateX(-50%) rotate(-4deg) !important;
+    animation: mTapeSway 2.8s ease-in-out infinite alternate !important;
+  }
+  .lock-icon {
+    animation: mFloat 4s ease-in-out infinite alternate !important;
+    transform: none !important;
+  }
+  .lock-sticker { transform: none !important; }
+
+  /* 4. Judul hero & opening: animasi masuk yang sama (tanpa blur) */
+  .hero-title-scrap,
+  .opening-name-scrap {
+    animation: mPop 0.7s var(--ease-out) both;
+  }
+
+  /* 5. Panel search/notif/profil/komentar/template/editor:
+     naik dari bawah di semua layar */
+  .search-panel,
+  .notif-panel,
+  .profile-panel,
+  .comment-panel,
+  .template-picker,
+  .photo-editor {
+    animation: mSheetUp 0.38s var(--sheet) both;
+  }
+}
