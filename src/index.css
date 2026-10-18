@@ -7023,6 +7023,361 @@ button:focus-visible,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================================================== */
+/* === 32. MOBILE ANIMATION PATCH — TEMPEL DI PALING BAWAH STYLESHEET ======= */
+/* ========================================================================== */
+/*
+  Prinsip:
+  - Animasi cuma pakai opacity + transform (jalan di GPU, mulus di HP).
+  - Pakai properti individual `translate`, `rotate`, `scale` supaya TIDAK
+    menimpa `transform` bawaan elemen (mis. translateX(-50%) di tape/nav).
+  - Semua animasi masuk dibungkus no-preference, jadi reduced-motion aman.
+*/
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ---------- KEYFRAMES ---------- */
+@keyframes mEnter {
+  from { opacity: 0; translate: 0 18px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes mPop {
+  from { opacity: 0; scale: 0.8; }
+  to   { opacity: 1; scale: 1; }
+}
+@keyframes mPolaroid {
+  from { opacity: 0; translate: 0 -28px; rotate: -7deg; scale: 0.92; }
+  to   { opacity: 1; translate: 0 0; rotate: 0deg; scale: 1; }
+}
+@keyframes mFloat {
+  from { translate: 0 0;    rotate: -4deg; }
+  to   { translate: 0 -8px; rotate: 4deg; }
+}
+@keyframes mSway {
+  from { rotate: -1.5deg; }
+  to   { rotate: 1.5deg; }
+}
+@keyframes mFlame {
+  0%   { scale: 1 1;       rotate: -2deg;   opacity: 0.95; }
+  35%  { scale: 0.94 1.07; rotate: 1.5deg;  opacity: 1; }
+  70%  { scale: 1.04 0.97; rotate: -1deg;   opacity: 0.97; }
+  100% { scale: 0.97 1.05; rotate: 2deg;    opacity: 1; }
+}
+@keyframes mSmoke {
+  0%   { opacity: 0;   translate: 0 0; scale: 0.8; }
+  30%  { opacity: 0.7; }
+  100% { opacity: 0;   translate: 0 -28px; scale: 1.4; }
+}
+@keyframes mTapeSway {
+  from { transform: translateX(-50%) rotate(-4deg); }
+  to   { transform: translateX(-50%) rotate(-1.5deg); }
+}
+@keyframes mNavIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes mSheetUp {
+  from { opacity: 0; translate: 0 36px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes mHeartBurst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+}
+@keyframes mCountTick {
+  from { opacity: 0; scale: 1.6; }
+  to   { opacity: 1; scale: 1; }
+}
+@keyframes mStripe {
+  from { transform: translateX(0); }
+  to   { transform: translateX(22.627px); } /* 16px * √2 → loop mulus */
+}
+@keyframes mScrollReveal {
+  from { opacity: 0; translate: 0 28px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* ========================================================================== */
+/* === A. ANIMASI MASUK (hanya jika user tidak matikan motion) =============== */
+/* ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* A1. Konten tiap slide muncul berurutan (stagger) */
+  .hero-content-scrap > *,
+  .ourstory-content-scrap > *,
+  .reasons-content-scrap > *,
+  .countdown-content-scrap > *,
+  .photobooth-content > *,
+  .opening-content-scrap > *:not(.opening-tape) {
+    animation: mEnter 0.6s var(--ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 80ms + 80ms);
+  }
+  .hero-content-scrap > :nth-child(1),
+  .ourstory-content-scrap > :nth-child(1),
+  .reasons-content-scrap > :nth-child(1),
+  .countdown-content-scrap > :nth-child(1),
+  .photobooth-content > :nth-child(1),
+  .opening-content-scrap > :nth-child(1) { --i: 0; }
+  .hero-content-scrap > :nth-child(2),
+  .ourstory-content-scrap > :nth-child(2),
+  .reasons-content-scrap > :nth-child(2),
+  .countdown-content-scrap > :nth-child(2),
+  .photobooth-content > :nth-child(2),
+  .opening-content-scrap > :nth-child(2) { --i: 1; }
+  .hero-content-scrap > :nth-child(3),
+  .ourstory-content-scrap > :nth-child(3),
+  .reasons-content-scrap > :nth-child(3),
+  .countdown-content-scrap > :nth-child(3),
+  .photobooth-content > :nth-child(3),
+  .opening-content-scrap > :nth-child(3) { --i: 2; }
+  .hero-content-scrap > :nth-child(4),
+  .photobooth-content > :nth-child(4),
+  .opening-content-scrap > :nth-child(4) { --i: 3; }
+  .hero-content-scrap > :nth-child(n+5),
+  .photobooth-content > :nth-child(n+5),
+  .opening-content-scrap > :nth-child(n+5) { --i: 4; }
+
+  /* A2. Polaroid hero "jatuh" ke kertas */
+  .hero-content-scrap > .hero-polaroid-wrap {
+    animation-name: mPolaroid;
+    animation-duration: 0.85s;
+    animation-timing-function: var(--spring);
+  }
+
+  /* A3. Kartu (alasan, reward, netflix): fade-up ringan.
+     Pakai fill "backwards" supaya hover/active tidak terkunci animasi. */
+  .reasons-note,
+  .reward-card,
+  .netflix-card {
+    animation: mEnter 0.5s var(--ease-out) backwards;
+  }
+  .reasons-note:nth-child(1), .reward-card:nth-child(1), .netflix-card:nth-child(1) { animation-delay: 0.05s; }
+  .reasons-note:nth-child(2), .reward-card:nth-child(2), .netflix-card:nth-child(2) { animation-delay: 0.12s; }
+  .reasons-note:nth-child(3), .reward-card:nth-child(3), .netflix-card:nth-child(3) { animation-delay: 0.19s; }
+  .reasons-note:nth-child(4), .reward-card:nth-child(4), .netflix-card:nth-child(4) { animation-delay: 0.26s; }
+  .reasons-note:nth-child(5), .netflix-card:nth-child(5) { animation-delay: 0.33s; }
+  .reasons-note:nth-child(n+6), .netflix-card:nth-child(n+6) { animation-delay: 0.4s; }
+
+  /* A4. Kotak countdown "pop" satu per satu */
+  .cd-note { animation: mPop 0.5s var(--spring) backwards; }
+  .cd-note:nth-child(1) { animation-delay: 0.15s; }
+  .cd-note:nth-child(2) { animation-delay: 0.25s; }
+  .cd-note:nth-child(3) { animation-delay: 0.35s; }
+  .cd-note:nth-child(4) { animation-delay: 0.45s; }
+
+  /* A5. Fix .reveal: stagger lewat --d sebelumnya ke-reset oleh shorthand transition */
+  .reveal {
+    transition-delay: var(--d, 0s);
+  }
+  .reveal.in { will-change: auto; }
+
+  /* A6. Nama/judul hero: tanpa blur di HP (blur animasi berat) */
+  @media (max-width: 768px) {
+    .hero-title-scrap,
+    .opening-name-scrap {
+      animation: mPop 0.7s var(--ease-out) both;
+    }
+  }
+
+  /* A7. Reveal saat scroll (progressive enhancement: Chrome 115+, Safari 26+) */
+  @supports (animation-timeline: view()) {
+    .ig-post,
+    .ourstory-item {
+      animation: mScrollReveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 45%;
+    }
+  }
+
+  /* A8. Bottom-sheet di HP: panel naik dari bawah, bukan zoom */
+  @media (max-width: 640px) {
+    .search-panel,
+    .notif-panel,
+    .profile-panel,
+    .comment-panel,
+    .template-picker,
+    .photo-editor {
+      animation: mSheetUp 0.38s var(--sheet) both;
+    }
+  }
+
+  /* A9. Angka countdown kamera photobooth (tambahkan key={count} di React
+     supaya animasi diulang tiap angka berganti) */
+  .photobooth-countdown span {
+    animation: mCountTick 0.5s var(--spring) both;
+  }
+}
+
+/* ========================================================================== */
+/* === B. FIX BUG ANIMASI YANG ADA =========================================== */
+/* ========================================================================== */
+
+/* B1. Slide nav: cineIn menimpa translateX(-50%) → nav jadi geser dari tengah */
+.slide-nav {
+  animation: mNavIn 0.7s var(--ease-out) 0.4s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide-nav { animation: none; }
+}
+
+/* B2. Heart burst IG: keyframe `pop` menghilangkan translate(-50%,-50%) */
+.ig-heart-burst {
+  animation: mHeartBurst 0.9s var(--ease-out) forwards;
+}
+
+/* B3. Lock screen: tape kehilangan translateX(-50%) di HP; stiker/kunci
+   dibuat melayang pelan (bukan getar), tape bergoyang halus */
+@media (max-width: 768px) {
+  .lock-tape {
+    transform: translateX(-50%) rotate(-4deg) !important;
+    animation: mTapeSway 2.8s ease-in-out infinite alternate !important;
+  }
+  .lock-icon {
+    animation: mFloat 4s ease-in-out infinite alternate !important;
     transform: none !important;
   }
+  .lock-sticker {
+    animation: mFloat 4.5s ease-in-out infinite alternate !important;
+    transform: none !important;
+  }
+}
+
+/* B4. Stiker di HP: delay dibuat beda-beda biar tidak gerak serempak */
+@media (max-width: 768px) {
+  [class*="-sticker-1"] { animation-delay: 0s !important; }
+  [class*="-sticker-2"] { animation-delay: -0.9s !important; }
+  [class*="-sticker-3"] { animation-delay: -1.8s !important; }
+  [class*="-sticker-4"] { animation-delay: -2.7s !important; }
+  [class*="-sticker-5"] { animation-delay: -3.4s !important; }
+  [class*="-sticker-6"] { animation-delay: -1.4s !important; }
+}
+
+/* B5. Lilin & api (SVG): pivot salah karena tanpa transform-box → api
+   "loncat". Dengan fill-box, pivot ada di dasar masing-masing api. */
+.candle-group,
+.flame-group,
+.smoke-group {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.candle-group {
+  animation: mSway 2.6s ease-in-out infinite alternate !important;
+}
+.candle-group:nth-child(odd)  { animation-delay: -0.6s !important; }
+.candle-group:nth-child(even) { animation-delay: -1.3s !important; }
+
+.flame-group {
+  animation: mFlame 0.9s ease-in-out infinite alternate !important;
+}
+.candle-group:nth-child(odd) .flame-group  { animation-duration: 0.75s !important; animation-delay: -0.2s !important; }
+.candle-group:nth-child(even) .flame-group { animation-duration: 1s !important;    animation-delay: -0.5s !important; }
+
+/* Asap naik lalu hilang setelah lilin ditiup */
+.smoke-group {
+  animation: mSmoke 2.4s ease-out forwards !important;
+}
+
+/* B6. Loading bar: stripe sebelumnya putus di tepi kiri & tidak loop mulus */
+.loading-bar-fill::after {
+  inset: 0 0 0 -23px;
+  animation: mStripe 0.8s linear infinite;
+}
+
+/* B7. Shadow scrapbook di HP: patch sebelumnya menghapusnya (jadi tampak flat).
+   Dikembalikan dalam bentuk statis, tanpa transisi, jadi tetap ringan. */
+@media (max-width: 768px) {
+  .hero-polaroid,
+  .netflix-card {
+    box-shadow: 3px 4px 0 rgba(248, 200, 212, 0.6), 0 4px 12px rgba(200, 49, 46, 0.12) !important;
+  }
+}
+
+/* ========================================================================== */
+/* === C. PERFORMA & SENTUHAN DI HP ========================================== */
+/* ========================================================================== */
+
+/* C1. Grain overlay + mix-blend-mode memaksa blending seluruh layar tiap frame.
+   Di HP: matikan blend-mode dan tipiskan. (Mau hilang total? ganti jadi display:none) */
+@media (max-width: 768px), (hover: none) {
+  body::before {
+    mix-blend-mode: normal;
+    opacity: 0.03;
+  }
+}
+
+/* C2. Backdrop blur besar itu mahal di GPU HP — kecilkan */
+@media (max-width: 768px) {
+  .slide-nav .btn,
+  .music,
+  .ig-topbar,
+  .ig-bottom-nav,
+  .netflix-navbar {
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+  }
+  .search-overlay,
+  .notif-overlay,
+  .profile-overlay,
+  .comment-overlay,
+  .photo-editor-overlay,
+  .template-picker-overlay {
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+}
+
+/* C3. Hilangkan delay tap 300ms + double-tap zoom di elemen interaktif */
+button,
+.btn,
+[role="button"],
+.env,
+.reward-card,
+.quiz-opt,
+.lock-key-btn,
+.netflix-card,
+.ig-nav-btn,
+.ig-action-btn,
+.progress-dots .dot {
+  touch-action: manipulation;
+}
+
+/* C4. Feedback sentuh (pengganti hover di layar sentuh) */
+@media (hover: none) and (pointer: coarse) {
+  .reasons-note:active,
+  .ourstory-note:active,
+  .netflix-card:active,
+  .ig-post:active,
+  .search-result:active,
+  .notif-item-clickable:active {
+    transform: scale(0.98) !important;
+    transition: transform 0.12s ease !important;
+  }
+}
+
+/* C5. Scroll horizontal Netflix: tidak "bocor" jadi swipe back/forward browser */
+.netflix-row-scroll {
+  overscroll-behavior-x: contain;
+}
+
+/* C6. Feed panjang: render item hanya saat mendekati layar */
+.ig-post {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
+}
+
+/* C7. Lepas will-change yang tidak perlu (boros memori GPU di HP) */
+.slide,
+.reveal,
+.hero-polaroid,
+.netflix-card {
+  will-change: auto !important;
 }
