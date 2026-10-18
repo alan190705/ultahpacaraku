@@ -7381,3 +7381,290 @@ button,
 .netflix-card {
   will-change: auto !important;
 }
+
+/* ========================================================================== */
+/* === 33. ANIMATION PATCH #2 — INTRO SAMPAI AKHIR ========================== */
+/* ========================================================================== */
+/*
+  TEMPEL SETELAH mobile-animations-patch.css (patch #1).
+  Memakai variabel & keyframes dari patch #1: --ease-out, --spring, mEnter,
+  mPop, mFloat, mSway.
+  Semua animasi pakai opacity + translate/rotate/scale (ringan di HP) dan
+  hanya aktif kalau pengguna tidak mematikan motion.
+*/
+
+/* ---------- KEYFRAMES BARU ---------- */
+@keyframes mBob        { from { translate: 0 0; } to { translate: 0 -6px; } }
+@keyframes mBreathe    { from { scale: 1; } to { scale: 1.04; } }
+@keyframes mHeartbeat  { 0%,100% { scale: 1; } 20% { scale: 1.18; } 40% { scale: 1; } 60% { scale: 1.12; } }
+@keyframes mTick       { 0%,100% { scale: 1; } 8% { scale: 1.1; } 25% { scale: 1; } }
+@keyframes mWiggle     { 0%,100% { rotate: 0deg; } 25% { rotate: -12deg; } 75% { rotate: 12deg; } }
+@keyframes mShake      { 0%,100% { translate: 0 0; } 20% { translate: -8px 0; } 40% { translate: 8px 0; } 60% { translate: -5px 0; } 80% { translate: 5px 0; } }
+@keyframes mNudge      { 0%,70%,100% { rotate: 0deg; scale: 1; } 78% { rotate: -3deg; scale: 1.05; } 86% { rotate: 3deg; scale: 1.05; } 94% { rotate: -1.5deg; scale: 1.02; } }
+@keyframes mPing       { 0% { scale: 1; opacity: 1; } 70%,100% { scale: 1.8; opacity: 0.25; } }
+@keyframes mCorrect    { 0% { scale: 1; } 40% { scale: 1.04; } 100% { scale: 1; } }
+@keyframes mLineDraw   { from { scale: 1 0; } to { scale: 1 1; } }
+@keyframes mSlideDown  { from { translate: 0 -100%; } to { translate: 0 0; } }
+@keyframes mSlideUp    { from { translate: 0 100%; } to { translate: 0 0; } }
+@keyframes mAlbumIn    { from { opacity: 0; scale: 0.9; translate: 0 30px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@keyframes mLetterOpen { from { opacity: 0; scale: 0.94; translate: 0 28px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@keyframes mPolSway    { from { rotate: -1.2deg; translate: 0 0; } to { rotate: 1.2deg; translate: 0 -3px; } }
+@keyframes mTapeVar {
+  from { transform: translateX(-50%) rotate(var(--ta, -3deg)); }
+  to   { transform: translateX(-50%) rotate(var(--tb, 0deg)); }
+}
+
+/* ---------- INDEKS STAGGER (--si) untuk daftar/grid ---------- */
+:is(.letter p, .quiz-opt, .notif-item, .search-result, .ig-highlight,
+    .hero-note-item, .comment-item, .spotify-embed-card, .template-option,
+    .lock-key-btn, .sb-polaroid, .profile-highlight, .search-highlight):nth-child(1)  { --si: 0; }
+:is(.letter p, .quiz-opt, .notif-item, .search-result, .ig-highlight,
+    .hero-note-item, .comment-item, .spotify-embed-card, .template-option,
+    .lock-key-btn, .sb-polaroid, .profile-highlight, .search-highlight):nth-child(2)  { --si: 1; }
+:is(.letter p, .quiz-opt, .notif-item, .search-result, .ig-highlight,
+    .hero-note-item, .comment-item, .spotify-embed-card, .template-option,
+    .lock-key-btn, .sb-polaroid, .profile-highlight, .search-highlight):nth-child(3)  { --si: 2; }
+:is(.letter p, .quiz-opt, .notif-item, .search-result, .ig-highlight,
+    .hero-note-item, .comment-item, .spotify-embed-card, .template-option,
+    .lock-key-btn, .sb-polaroid, .profile-highlight, .search-highlight):nth-child(4)  { --si: 3; }
+:is(.letter p, .quiz-opt, .notif-item, .search-result, .ig-highlight,
+    .lock-key-btn, .sb-polaroid, .profile-highlight, .template-option):nth-child(5)   { --si: 4; }
+:is(.letter p, .quiz-opt, .notif-item, .search-result, .ig-highlight,
+    .lock-key-btn, .sb-polaroid, .profile-highlight, .template-option):nth-child(6)   { --si: 5; }
+:is(.letter p, .notif-item, .search-result, .lock-key-btn, .sb-polaroid):nth-child(7)  { --si: 6; }
+:is(.letter p, .notif-item, .search-result, .lock-key-btn, .sb-polaroid):nth-child(8)  { --si: 7; }
+:is(.lock-key-btn, .sb-polaroid):nth-child(9)  { --si: 8; }
+:is(.lock-key-btn):nth-child(10) { --si: 9; }
+:is(.lock-key-btn):nth-child(11) { --si: 10; }
+:is(.lock-key-btn):nth-child(12) { --si: 11; }
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* ======================================================================== */
+  /* 1. INTRO ALBUM (sb-*)                                                    */
+  /* ======================================================================== */
+  .sb-album-wrap { animation: mAlbumIn 1s var(--ease-out) backwards; }
+
+  /* Foto polaroid goyang pelan setelah mendarat */
+  .sb-photos .sb-polaroid {
+    animation: mPolSway 4.5s ease-in-out infinite alternate;
+    animation-delay: calc(1.2s - var(--si, 0) * 0.5s);
+  }
+
+  /* Doodle melayang */
+  .sb-decor .sb-doodle { animation: mFloat 3.4s ease-in-out 0.8s infinite alternate; }
+
+  /* Nama pada ucapan "bernapas" setelah selesai tertulis */
+  .sb-greet .sb-greet-line2 { animation: mBreathe 2.8s ease-in-out 2.2s infinite alternate; }
+
+  /* ======================================================================== */
+  /* 2. OPENING / LOCK / LOADING                                              */
+  /* ======================================================================== */
+  .opening-tartan-top,
+  .lock-tartan-top,
+  .loading-tartan-top      { animation: mSlideDown 0.8s var(--ease-out) backwards; }
+  .opening-tartan-bottom,
+  .lock-tartan-bottom,
+  .loading-tartan-bottom   { animation: mSlideUp 0.8s var(--ease-out) backwards; }
+
+  /* Tombol buka "bernapas" supaya jelas bisa diketuk */
+  .opening-btn-scrap { animation: mBreathe 1.8s ease-in-out 1.2s infinite alternate; }
+
+  /* Lock: elemen muncul berurutan, tombol angka pop satu-satu */
+  .lock-scrap > .lock-icon-wrap,
+  .lock-scrap > .lock-text,
+  .lock-scrap > .lock-dots,
+  .lock-scrap > .lock-error { animation: mEnter 0.55s var(--ease-out) backwards; }
+  .lock-scrap > .lock-icon-wrap { animation-delay: 0.1s; }
+  .lock-scrap > .lock-text      { animation-delay: 0.22s; }
+  .lock-scrap > .lock-dots      { animation-delay: 0.34s; }
+  .lock-key-btn {
+    animation: mPop 0.4s var(--spring) backwards;
+    animation-delay: calc(0.4s + var(--si, 0) * 40ms);
+  }
+
+  /* Loading: tape bergoyang */
+  .loading-tape { --ta: -3deg; --tb: 0deg; animation: mTapeVar 2.6s ease-in-out infinite alternate; }
+
+  /* ======================================================================== */
+  /* 3. HERO                                                                  */
+  /* ======================================================================== */
+  /* Polaroid: jatuh (patch #1) lalu melayang pelan */
+  .hero-content-scrap > .hero-polaroid-wrap {
+    animation:
+      mPolaroid 0.85s var(--spring) calc(var(--i, 0) * 80ms + 80ms) backwards,
+      mBob 5s ease-in-out 1.2s infinite alternate;
+  }
+  .hero-polaroid-tape { --ta: 3deg;  --tb: 0deg;  animation: mTapeVar 3s ease-in-out infinite alternate; }
+  .hero-note-tape     { --ta: -2deg; --tb: 1deg;  animation: mTapeVar 3.4s ease-in-out infinite alternate; }
+
+  .hero-note-item {
+    animation: mPop 0.5s var(--spring) backwards;
+    animation-delay: calc(0.7s + var(--si, 0) * 120ms);
+  }
+
+  /* ======================================================================== */
+  /* 4. OUR STORY & REASONS                                                   */
+  /* ======================================================================== */
+  /* Garis timeline "tergambar" dari atas ke bawah */
+  .ourstory-timeline::before {
+    transform-origin: top;
+    animation: mLineDraw 1.4s var(--ease-out) 0.3s backwards;
+  }
+  .ourstory-dot { animation: mPop 0.5s var(--spring) 0.5s backwards; }
+
+  /* Ikon bergoyang saat disentuh / hover */
+  .ourstory-note:active .ourstory-icon,
+  .reasons-note:active .reasons-note-icon { animation: mWiggle 0.5s ease; }
+  @media (hover: hover) {
+    .ourstory-note:hover .ourstory-icon,
+    .reasons-note:hover .reasons-note-icon { animation: mWiggle 0.6s ease; }
+  }
+
+  /* ======================================================================== */
+  /* 5. COUNTDOWN                                                             */
+  /* ======================================================================== */
+  /* Kotak terakhir (detik) berdenyut tiap 1 detik */
+  .cd-note:last-child .cd-num-scrap { animation: mTick 1s ease-in-out infinite; }
+
+  /* ======================================================================== */
+  /* 6. CAKE                                                                  */
+  /* ======================================================================== */
+  .cake-scrap > :not([class*="sticker"]):not(.cake-grid) {
+    animation: mEnter 0.6s var(--ease-out) backwards;
+  }
+  .cake-scrap > .cake-stage-scrap { animation-delay: 0.15s; }
+  .cake-scrap > .mic-indicator-scrap { animation-delay: 0.3s; }
+  .cake-scrap > .cake-actions-scrap  { animation-delay: 0.4s; }
+
+  .cake-svg-scrap { animation: mBob 3.6s ease-in-out infinite alternate; }
+  .cake-tape { --ta: -3deg; --tb: 0deg; animation: mTapeVar 2.8s ease-in-out infinite alternate; }
+  .cake-after-scrap { animation: mPop 0.7s var(--spring) both; }
+  .cake-error-scrap { animation: mShake 0.45s ease; }
+
+  /* ======================================================================== */
+  /* 7. REWARDS                                                               */
+  /* ======================================================================== */
+  .rewards-section h2,
+  .rewards-subtitle { animation: mEnter 0.6s var(--ease-out) backwards; }
+  .rewards-subtitle { animation-delay: 0.1s; }
+  .rewards-complete { animation: mPop 0.7s var(--spring) both; }
+  .reward-card:active .reward-icon { animation: mWiggle 0.5s ease; }
+
+  /* ======================================================================== */
+  /* 8. LOVE LETTER                                                           */
+  /* ======================================================================== */
+  /* FIX: stickerFloat menimpa translate(-50%,-50%) → hati keluar dari tengah */
+  .env::after { animation: mHeartbeat 1.6s ease-in-out infinite; }
+  .env.open::after { animation: none; }
+  .env:not(.open) { animation: mBob 3s ease-in-out infinite alternate; }
+
+  /* Surat terbuka lalu barisnya muncul satu per satu */
+  .letter { animation: mLetterOpen 0.7s var(--ease-out) backwards; }
+  .letter p {
+    animation: mEnter 0.6s var(--ease-out) backwards;
+    animation-delay: calc(0.35s + var(--si, 0) * 0.3s);
+  }
+  .letter::after { animation: mSway 3s ease-in-out infinite alternate; }
+
+  /* ======================================================================== */
+  /* 9. QUIZ                                                                  */
+  /* ======================================================================== */
+  .quiz-q { animation: mEnter 0.45s var(--ease-out) backwards; }
+  .quiz-opt {
+    animation: mEnter 0.45s var(--ease-out) backwards;
+    animation-delay: calc(0.1s + var(--si, 0) * 70ms);
+  }
+  .quiz-opt.correct { animation: mCorrect 0.4s var(--spring); }
+  .quiz-opt.wrong   { animation: mShake 0.4s ease; }
+  .quiz-score  { animation: mPop 0.8s var(--spring) 0.2s backwards; }
+  .quiz-result { animation: mLetterOpen 0.6s var(--ease-out) backwards; }
+
+  /* ======================================================================== */
+  /* 10. SURPRISE & FINAL                                                     */
+  /* ======================================================================== */
+  .surprise .btn { animation: mNudge 3s ease-in-out 1s infinite; }
+  .pop > * { animation: mEnter 0.6s var(--ease-out) backwards; }
+  .pop > :nth-child(1) { animation-delay: 0.25s; }
+  .pop > :nth-child(2) { animation-delay: 0.4s; }
+  .pop > :nth-child(3) { animation-delay: 0.55s; }
+  .pop > :nth-child(n+4) { animation-delay: 0.7s; }
+
+  .final-in > * { animation: mEnter 0.6s var(--ease-out) backwards; }
+  .final-in > :nth-child(1) { animation-delay: 0.3s; }
+  .final-in > :nth-child(2) { animation-delay: 0.45s; }
+  .final-in > :nth-child(3) { animation-delay: 0.6s; }
+  .final-in > :nth-child(n+4) { animation-delay: 0.75s; }
+  .final-in h1 { animation: mPop 0.8s var(--spring) 0.3s backwards; }
+
+  /* ======================================================================== */
+  /* 11. NETFLIX                                                              */
+  /* ======================================================================== */
+  .netflix-navbar { animation: mSlideDown 0.6s var(--ease-out) backwards; }
+  .netflix-overlay-content > * { animation: mEnter 0.6s var(--ease-out) backwards; }
+  .netflix-overlay-content > :nth-child(1) { animation-delay: 0.15s; }
+  .netflix-overlay-content > :nth-child(2) { animation-delay: 0.3s; }
+  .netflix-overlay-content > :nth-child(3) { animation-delay: 0.45s; }
+  .netflix-overlay-content > :nth-child(n+4) { animation-delay: 0.6s; }
+
+  .netflix-row-title { animation: mEnter 0.5s var(--ease-out) backwards; }
+  .spotify-embed-card {
+    animation: mEnter 0.5s var(--ease-out) backwards;
+    animation-delay: calc(0.1s + var(--si, 0) * 80ms);
+  }
+  @media (hover: hover) {
+    .netflix-card:hover .netflix-card-play { animation: mPop 0.3s var(--spring); }
+  }
+
+  /* ======================================================================== */
+  /* 12. INSTAGRAM FEED                                                       */
+  /* ======================================================================== */
+  .ig-topbar { animation: mSlideDown 0.5s var(--ease-out) backwards; }
+  .ig-bottom-nav { animation: mSlideUp 0.5s var(--ease-out) 0.2s backwards; }
+  .ig-profile > * { animation: mEnter 0.55s var(--ease-out) backwards; }
+  .ig-profile > :nth-child(1) { animation-delay: 0.05s; }
+  .ig-profile > :nth-child(2) { animation-delay: 0.12s; }
+  .ig-profile > :nth-child(3) { animation-delay: 0.2s; }
+  .ig-profile > :nth-child(4) { animation-delay: 0.28s; }
+  .ig-profile > :nth-child(n+5) { animation-delay: 0.36s; }
+  .ig-highlight {
+    animation: mPop 0.45s var(--spring) backwards;
+    animation-delay: calc(0.35s + var(--si, 0) * 70ms);
+  }
+  .ig-nav-dot { animation: mPing 1.6s ease-out infinite; }
+  .ig-action-btn:active svg { animation: mCorrect 0.35s var(--spring); }
+
+  /* ======================================================================== */
+  /* 13. PHOTOBOOTH                                                           */
+  /* ======================================================================== */
+  .photobooth-placeholder-icon { animation: mBob 2.4s ease-in-out infinite alternate; }
+  .photobooth-btn-snap:not(:disabled) { animation: mBreathe 1.6s ease-in-out infinite alternate; }
+  .photobooth-title-tape  { --ta: -3deg; --tb: 0deg; animation: mTapeVar 3s ease-in-out infinite alternate; }
+  .photobooth-camera-tape { --ta: 3deg;  --tb: 0deg; animation: mTapeVar 3s ease-in-out infinite alternate; }
+  .template-option-check  { animation: mPop 0.35s var(--spring); }
+  .template-option {
+    animation: mPop 0.4s var(--spring) backwards;
+    animation-delay: calc(0.1s + var(--si, 0) * 50ms);
+  }
+  .photo-editor-tape { --ta: -2deg; --tb: 1deg; animation: mTapeVar 3s ease-in-out infinite alternate; }
+
+  /* ======================================================================== */
+  /* 14. PANEL: SEARCH / NOTIF / PROFILE / KOMENTAR                           */
+  /* ======================================================================== */
+  .notif-item {
+    animation: mEnter 0.4s var(--ease-out) backwards;
+    animation-delay: calc(0.12s + var(--si, 0) * 60ms);
+  }
+  .search-result {
+    animation: mPop 0.35s var(--ease-out) backwards;
+    animation-delay: calc(0.05s + var(--si, 0) * 40ms);
+  }
+  .search-highlight,
+  .profile-highlight {
+    animation: mPop 0.4s var(--spring) backwards;
+    animation-delay: calc(0.1s + var(--si, 0) * 60ms);
+  }
+  .profile-avatar { animation: mPop 0.6s var(--spring) 0.1s backwards; }
+  .comment-item { animation: mEnter 0.35s var(--ease-out) backwards; }
+  .comment-confirm { animation: mPop 0.3s var(--spring); }
+}
