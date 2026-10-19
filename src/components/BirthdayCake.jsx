@@ -5,32 +5,40 @@ import { CONFIG } from '../config'
 export default function BirthdayCake() {
   const [blown, setBlown] = useState(false)
   const [micGranted, setMicGranted] = useState(false)
-  const [micError, setMicError] = useState(false)
-  const [micLevel, setMicLevel] = useState(0)
+  const [micError, setMicError] = useState('')
   const [calibrating, setCalibrating] = useState(false)
+
   const audioCtxRef = useRef(null)
   const streamRef = useRef(null)
   const rafRef = useRef(null)
-  const blowStartRef = useRef(null)
-  const dynamicThresholdRef = useRef(130)
+  const blownRef = useRef(false)
+  const barFillRef = useRef(null) // bar diisi lewat ref, TANPA re-render tiap frame
 
-  // === TUNING (fallback kalau kalibrasi gagal) ===
-  const BLOW_THRESHOLD = 130
-  const HOLD_DURATION = 1200
-  const MIN_START_LEVEL = 110
+  // === TUNING ===
+  const HOLD_DURATION = 450   // tiupan harus bertahan segini lama (ms)
+  const CALIBRATION_MS = 700  // mic "belajar" suara sekitar dulu
+  const MIN_THRESHOLD = 50    // batas minimum
+  const MAX_THRESHOLD = 140   // batas maksimum
+  const MARGIN = 30           // seberapa di atas suara sekitar dianggap tiupan
 
   const candleCount = CONFIG.candleCount || 3
 
-  // === HANDLE BLOW — cuma bisa dipanggil dari check() ===
-  const handleBlow = () => {
-    if (blown) return
-    setBlown(true)
-
+  // === MATIKAN MIC ===
+  const stopMic = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
     if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-      audioCtxRef.current.close()
+      audioCtxRef.current.close().catch(() => {})
     }
+  }
+
+  // === LILIN PADAM ===
+  const handleBlow = () => {
+    if (blownRef.current) return
+    blownRef.current = true
+    setBlown(true)
+    stopMic()
 
     const colors = ['#e8909c', '#c8312e', '#fdf8f3', '#f8c8d4', '#e8b33e']
     confetti({ particleCount: 120, spread: 90, origin: { y: 0.5 }, colors })
@@ -42,9 +50,22 @@ export default function BirthdayCake() {
     }, 600)
   }
 
-  // === START MIC ===
+  // === START MIC (harus dipanggil dari tap) ===
   const startMic = async () => {
-    setMicError(false)
+    setMicError('')
+
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      setMicError('⚠️ Mic cuma bisa lewat HTTPS. Pakai tombol tiup manual ya.')
+      return
+    }
+
+    // PENTING di iPhone: AudioContext dibuat & di-resume LANGSUNG di dalam tap,
+    // sebelum await apa pun. Kalau tidak, dia "tidur" dan levelnya selalu 0.
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    const ctx = new AudioCtx()
+    audioCtxRef.current = ctx
+    ctx.resume().catch(() => {})
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -54,80 +75,92 @@ export default function BirthdayCake() {
         },
       })
       streamRef.current = stream
-      setMicGranted(true)
+      await ctx.resume()
 
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      const ctx = new AudioCtx()
-      audioCtxRef.current = ctx
+      setMicGranted(true)
+      setCalibrating(true)
 
       const source = ctx.createMediaStreamSource(stream)
       const analyser = ctx.createAnalyser()
       analyser.fftSize = 512
-      analyser.smoothingTimeConstant = 0.7
+      analyser.smoothingTimeConstant = 0.4
       source.connect(analyser)
 
-      const dataArray = new Uint8Array(analyser.frequencyBinCount)
+      const data = new Uint8Array(analyser.frequencyBinCount)
+      const readLevel = () => {
+        analyser.getByteFrequencyData(data)
+        let sum = 0
+        for (let i = 0; i < 20; i++) sum += data[i] // frekuensi rendah (tiupan)
+        return sum / 20
+      }
 
-      // === CHECK LOOP ===
-      const check = () => {
-        // STOP kalau udah ditiup
-        if (blown) return
+      let threshold = 80
+      let calibrated = false
+      let calSum = 0
+      let calCount = 0
+      let blowStart = 0
+      let lastResume = 0
+      const startedAt = performance.now()
 
-        // Cek mic masih aktif
-        if (!streamRef.current) return
-        const tracks = streamRef.current.getAudioTracks()
-        if (tracks.length === 0 || tracks[0].readyState !== 'live') {
-          console.log('Mic track gak live, stop')
-          return
+      const check = (now) => {
+        if (blownRef.current || !streamRef.current) return
+
+        const track = streamRef.current.getAudioTracks()[0]
+        if (!track || track.readyState !== 'live') return
+
+        // Kalau iOS menidurkan audio lagi, bangunkan
+        if (ctx.state !== 'running' && now - lastResume > 500) {
+          lastResume = now
+          ctx.resume().catch(() => {})
         }
 
-        analyser.getByteFrequencyData(dataArray)
-        let sum = 0
-        for (let i = 0; i < 20; i++) sum += dataArray[i]
-        const avg = sum / 20
-        setMicLevel(avg)
+        const avg = readLevel()
 
-        // === LOGIKA TIUP ===
-        // Butuh avg > BLOW_THRESHOLD buat mulai hitungan
-        // Reset cuma kalau avg < MIN_START_LEVEL
-        if (avg > BLOW_THRESHOLD) {
-          if (!blowStartRef.current) {
-            blowStartRef.current = Date.now()
-            console.log('🟡 Mulai hitung tiupan...')
-          } else {
-            const duration = Date.now() - blowStartRef.current
-            if (duration >= HOLD_DURATION) {
-              console.log('🟢 Tiupan terdeteksi! Matiin lilin...')
-              handleBlow()
-              return
-            }
+        if (!calibrated) {
+          // Kalibrasi: ukur suara sekitar, threshold = suara sekitar + margin
+          calSum += avg
+          calCount++
+          if (now - startedAt >= CALIBRATION_MS) {
+            const baseline = calSum / Math.max(calCount, 1)
+            threshold = Math.min(MAX_THRESHOLD, Math.max(MIN_THRESHOLD, baseline + MARGIN))
+            calibrated = true
+            setCalibrating(false)
           }
-        } else if (avg < MIN_START_LEVEL) {
-          if (blowStartRef.current) {
-            console.log('🔴 Tiupan berhenti, reset')
+        } else if (avg > threshold) {
+          if (!blowStart) {
+            blowStart = now
+          } else if (now - blowStart >= HOLD_DURATION) {
+            handleBlow()
+            return
           }
-          blowStartRef.current = null
+        } else if (avg < threshold - 15) {
+          blowStart = 0
+        }
+
+        // Update bar langsung ke DOM (tanpa setState → tidak bikin patah-patah)
+        if (barFillRef.current) {
+          barFillRef.current.style.width = `${Math.min(100, (avg / (threshold * 1.4)) * 100)}%`
         }
 
         rafRef.current = requestAnimationFrame(check)
       }
 
-      check()
+      rafRef.current = requestAnimationFrame(check)
     } catch (err) {
       console.log('Mic error:', err)
-      setMicError(true)
+      if (ctx.state !== 'closed') ctx.close().catch(() => {})
+      setMicError(
+        err && err.name === 'NotAllowedError'
+          ? '⚠️ Izin mic ditolak. Aktifkan izin mic di browser, atau pakai tiup manual.'
+          : '⚠️ Mic gak bisa diakses. Pakai tombol tiup manual ya.'
+      )
     }
   }
 
-  // === CLEANUP (di LUAR startMic!) ===
+  // === CLEANUP ===
   useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop())
-      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        audioCtxRef.current.close()
-      }
-    }
+    return () => stopMic()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -187,7 +220,7 @@ export default function BirthdayCake() {
               const startX = 200 - ((candleCount - 1) * 40) / 2
               const x = startX + i * 40
               return (
-                <g key={i} className="candle-group" style={{ transformOrigin: `${x}px 135px` }}>
+                <g key={i} className="candle-group">
                   <rect x={x - 6} y="95" width="12" height="45" rx="3" fill="#fdf8f3" />
                   <rect x={x - 6} y="100" width="12" height="4" fill="#e8909c" />
                   <rect x={x - 6} y="110" width="12" height="4" fill="#e8909c" />
@@ -237,34 +270,37 @@ export default function BirthdayCake() {
       {/* === MIC INDICATOR (pas mic aktif) === */}
       {micGranted && !blown && (
         <div className="mic-indicator-scrap">
-          <p className="mic-hint-scrap">💨 Tiup kenceng ke mic-nya...</p>
+          <p className="mic-hint-scrap">
+            {calibrating ? '🎧 Diam sebentar, lagi nyesuaiin mic...' : '💨 Tiup kenceng ke mic-nya...'}
+          </p>
           <div className="mic-bar-scrap">
             <div
+              ref={barFillRef}
               className="mic-bar-fill-scrap"
-              style={{ width: `${Math.min(micLevel * 1.5, 100)}%` }}
+              style={{ width: '0%' }}
             />
-            {/* Garis threshold — indikator kapan dianggap tiup */}
-            <div
-              className="mic-bar-threshold"
-              style={{ left: `${BLOW_THRESHOLD}%` }}
-            />
+            {/* Garis threshold: bar penuh = 1.4x threshold, jadi garis selalu di ~71% */}
+            <div className="mic-bar-threshold" style={{ left: '71.4%' }} />
           </div>
           <p className="mic-tip-scrap">Tahan tiupannya sampe lilin mati 🔥</p>
         </div>
       )}
 
-      {/* === TOMBOL MIC (sebelum mic aktif) === */}
-      {!blown && !micGranted && (
+      {/* === TOMBOL === */}
+      {!blown && (
         <div className="cake-actions-scrap">
-          <button className="cake-btn-scrap" onClick={startMic}>
-            🎤 Nyalain Mic Dulu
+          {!micGranted && (
+            <button className="cake-btn-scrap" onClick={startMic}>
+              🎤 Nyalain Mic Dulu
+            </button>
+          )}
+
+          {/* Cadangan kalau mic gak bisa dipakai */}
+          <button className="cake-btn-scrap" onClick={handleBlow}>
+            💨 Tiup Manual
           </button>
 
-          {micError && (
-            <p className="cake-error-scrap">
-              ⚠️ Mic gak bisa diakses. Cek izin browser kamu ya.
-            </p>
-          )}
+          {micError && <p className="cake-error-scrap">{micError}</p>}
         </div>
       )}
 
