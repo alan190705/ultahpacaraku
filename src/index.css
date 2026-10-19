@@ -7936,3 +7936,57 @@ body::before { display: none !important; }
       filter 700ms ease !important;
   }
 }
+
+/* ========================================================================== */
+/* === 37. INTRO BUKU — LEBIH LAMBAT & SINEMATIK ============================ */
+/* ========================================================================== */
+/*
+  TEMPEL PALING BAWAH, setelah patch #1 sampai #5.
+  Hanya mengubah durasi dan jeda (transition), tidak mengubah tampilan akhir.
+  Mau lebih lambat/cepat? Ubah angka durasi dan delay di bawah.
+*/
+
+/* Buku terbuka pelan (2.2 detik) setelah jeda sebentar */
+.sb-intro .sb-cover-front {
+  transition: transform 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.3s !important;
+}
+
+/* Foto muncul satu per satu: jeda antar foto digandakan */
+.sb-intro .sb-polaroid {
+  transition:
+    opacity 900ms ease calc(var(--delay, 0ms) * 2 + 400ms),
+    transform 1200ms cubic-bezier(0.22, 1, 0.36, 1) calc(var(--delay, 0ms) * 2 + 400ms) !important;
+}
+
+/* Doodle */
+.sb-intro .sb-doodle {
+  transition:
+    opacity 1100ms ease,
+    transform 1100ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.sb-intro .sb-doodle-heart { transition-delay: 400ms !important; }
+.sb-intro .sb-doodle-star  { transition-delay: 800ms !important; }
+.sb-intro .sb-doodle-swirl { transition-delay: 1200ms !important; }
+
+/* Ucapan tertulis perlahan, baris demi baris */
+.sb-intro .sb-greeting {
+  transition: opacity 900ms ease !important;
+}
+.sb-intro .sb-greet-line1 {
+  transition: clip-path 1700ms ease-in-out 500ms, opacity 150ms ease 500ms !important;
+}
+.sb-intro .sb-greet-line2 {
+  transition: clip-path 2000ms ease-in-out 1600ms, opacity 150ms ease 1600ms !important;
+}
+.sb-intro .sb-greet-line3 {
+  transition: clip-path 1600ms ease-in-out 3400ms, opacity 150ms ease 3400ms !important;
+}
+
+/* Keluar dari intro lebih halus */
+.sb-intro { transition: opacity 1400ms ease !important; }
+.sb-intro.sb-morph .sb-album-wrap {
+  transition:
+    transform 1400ms cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 1200ms ease 150ms,
+    filter 1000ms ease !important;
+}
