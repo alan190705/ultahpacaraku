@@ -7990,3 +7990,26 @@ body::before { display: none !important; }
     opacity 1200ms ease 150ms,
     filter 1000ms ease !important;
 }
+
+/* ========================================================================== */
+/* === 38. TULISAN UCAPAN INTRO — SELESAI LEBIH AWAL ======================== */
+/* ========================================================================== */
+/*
+  TEMPEL PALING BAWAH, setelah patch #1 sampai #6.
+  Mengganti timing tulisan ucapan dari patch #6 (yang selesai ±5 detik)
+  menjadi selesai ±2,5 detik, supaya nama tidak terpotong saat intro menutup.
+  Buku dan foto tetap memakai kecepatan lambat dari patch #6.
+*/
+
+.sb-intro .sb-greeting {
+  transition: opacity 600ms ease !important;
+}
+.sb-intro .sb-greet-line1 {
+  transition: clip-path 1000ms ease-in-out 300ms, opacity 100ms ease 300ms !important;
+}
+.sb-intro .sb-greet-line2 {
+  transition: clip-path 1300ms ease-in-out 800ms, opacity 100ms ease 800ms !important;
+}
+.sb-intro .sb-greet-line3 {
+  transition: clip-path 800ms ease-in-out 1700ms, opacity 100ms ease 1700ms !important;
+}

@@ -3,6 +3,13 @@ import { CONFIG, SCRAPBOOK_INTRO } from '../config'
 
 /**
  * ScrapbookIntro — Romantic Digital Scrapbook Opening.
+ *
+ * Perubahan:
+ *   - Intro baru menutup SETELAH tulisan ucapan selesai (morph dihitung dari
+ *     waktu ucapan muncul + durasi tulisan + jeda).
+ *   - Tidak ada lagi cabang reduce-motion di JS yang memotong intro.
+ *   - onDone dipegang lewat ref supaya timeline tidak ter-reset saat parent
+ *     render ulang.
  */
 
 const PHASE_LOADING = 0
@@ -14,16 +21,23 @@ const PHASE_GREET   = 5
 const PHASE_MORPH   = 6
 const PHASE_DONE    = 7
 
+// === DURASI (ms) — samakan dengan CSS (patch #6 dan #7) ===
+// Tulisan ucapan selesai ±2.5s setelah kelas sb-greet muncul (baris 3 selesai
+// di 1700 + 800ms). Kalau kamu ubah angka di CSS, ubah juga di sini.
+const GREET_DURATION = 2600
+const GREET_LINGER   = 2000 // jeda setelah tulisan selesai, sebelum intro menutup
+
 // Timeline (ms)
 const T = {
   closed:  600,
-  open:    1800,
-  photos:  3400,
-  decor:   5600,
-  greet:   6800,
-  morph:   8600,
+  open:    1800,   // buku mulai terbuka (selesai ±4.3s)
+  photos:  4000,   // foto mulai muncul satu per satu
+  decor:   6200,
+  greet:   7400,
 }
-const MORPH_FADE = 900
+T.morph = T.greet + GREET_DURATION + GREET_LINGER // ±12 detik
+
+const MORPH_FADE = 1400 // samakan dengan transisi keluar di CSS (patch #6)
 
 function seededRandom(seed) {
   let s = seed
@@ -39,6 +53,8 @@ export default function ScrapbookIntro({ onDone }) {
   const [photos, setPhotos] = useState([])
   const timersRef = useRef([])
   const isMorphingRef = useRef(false)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   const clearAllTimers = useCallback(() => {
     timersRef.current.forEach((id) => {
@@ -53,7 +69,7 @@ export default function ScrapbookIntro({ onDone }) {
     const sourcePhotos = (CONFIG.photos || []).filter((p) => p?.src)
     const count = Math.min(SCRAPBOOK_INTRO?.photoCount || 9, sourcePhotos.length)
 
-    const step = Math.max(1, Math.floor(sourcePhotos.length / count))
+    const step = Math.max(1, Math.floor(sourcePhotos.length / Math.max(count, 1)))
     const picked = []
     for (let i = 0; i < count; i++) {
       const idx = Math.min(i * step, sourcePhotos.length - 1)
@@ -82,8 +98,6 @@ export default function ScrapbookIntro({ onDone }) {
     setPhotos(picked)
 
     const fb = setTimeout(() => setPreloaded(true), 3000)
-    timersRef.current.push(fb)
-
     return () => clearTimeout(fb)
   }, [])
 
@@ -96,24 +110,14 @@ export default function ScrapbookIntro({ onDone }) {
     setPhase(PHASE_MORPH)
     const doneTimer = setTimeout(() => {
       setPhase(PHASE_DONE)
-      onDone()
+      onDoneRef.current?.()
     }, MORPH_FADE)
     timersRef.current.push(doneTimer)
-  }, [onDone, clearAllTimers])
+  }, [clearAllTimers])
 
-  // === 3. TIMELINE ===
+  // === 3. TIMELINE (sama di semua perangkat) ===
   useEffect(() => {
     if (!preloaded) return
-
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    ) {
-      setPhase(PHASE_GREET)
-      const t1 = setTimeout(() => startMorph(), 1500)
-      timersRef.current.push(t1)
-      return () => clearAllTimers()
-    }
 
     const schedule = (fn, delay) => {
       const id = setTimeout(fn, delay)

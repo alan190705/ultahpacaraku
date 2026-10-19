@@ -6,26 +6,21 @@ import { CONFIG } from '../config'
  *
  * Timeline (beat-based):
  *   0.0s  — Pitch black
- *   0.3s  — Embers glow (partikel pink mulai melayang)
- *   1.0s  — Title reveal (letter-by-letter, blur → sharp)
- *   2.0s  — Tagline + ornament lines draw
- *   2.8s  — Heart pulse (the "beat")
- *   3.8s  — Linger (breath hold)
- *   4.8s  — Morph (dolly-in + iris clip ke heart di 50% 36%)
- *   6.05s — Unmount bersih (LockScreen di belakang aktif 100%)
+ *   0.3s  — Embers glow
+ *   1.0s  — Title reveal (letter-by-letter)
+ *   2.0s  — Tagline + ornament lines
+ *   2.8s  — Heart pulse
+ *   3.8s  — Linger
+ *   4.8s  — Morph (atau lebih lambat kalau nama panjang, lihat MORPH_AT)
+ *   +1.25s — Unmount
  *
- * Fitur:
- *   - Preload-aware: morph menunggu gambar (max +1.5s) supaya
- *     LockScreen tidak muncul dengan gambar kosong.
- *   - Skip: tap anywhere, atau Enter / Space / Escape.
- *   - Reduced motion: fade-out 400ms, tanpa iris/partikel.
- *   - 24 partikel deterministik (seeded random).
- *   - Clean unmount, no timer leak.
- *
- * Catatan penting untuk parent (App.jsx):
- *   LockScreen HARUS sudah ter-render di belakang sejak awal,
- *   supaya saat iris clip-path mengecil, yang terlihat di
- *   belakangnya adalah LockScreen asli — bukan hitam.
+ * Perubahan:
+ *   - Tidak ada lagi jalan pintas reduced-motion di JS (penyebab intro langsung
+ *     selesai di HP). Penyesuaiannya ditangani CSS.
+ *   - Morph tidak akan mulai sebelum huruf terakhir nama selesai muncul.
+ *   - Ketukan/tombol skip baru aktif setelah nama selesai muncul.
+ *   - onDone dipegang lewat ref, jadi timeline tidak ter-reset kalau parent
+ *     mengirim fungsi baru di tiap render.
  */
 
 const PHASE_INIT   = 0
@@ -37,11 +32,14 @@ const PHASE_LINGER = 5
 const PHASE_MORPH  = 6
 const PHASE_DONE   = 7
 
-// CSS morph duration = 1.2s (1200ms). Beri buffer 50ms supaya
-// animasi CSS selesai dulu sebelum React unmount komponen.
 const MORPH_DURATION = 1250
 
-// Seeded pseudo-random — biar posisi partikel konsisten setiap render
+// === TUNING NAMA ===
+const TITLE_START   = 1000 // ms, harus sama dengan delay dasar di style huruf
+const CHAR_STAGGER  = 40   // ms antar huruf
+const CHAR_DURATION = 900  // perkiraan lama animasi satu huruf (ms)
+const LINGER_AFTER_NAME = 1800 // jeda setelah nama selesai, sebelum morph (ms)
+
 function seededParticles(count = 24) {
   const out = []
   let seed = 42
@@ -63,10 +61,17 @@ function seededParticles(count = 24) {
 
 export default function CinematicIntro({ onDone }) {
   const [phase, setPhase] = useState(PHASE_INIT)
-  const [preloaded, setPreloaded] = useState(false)
   const timersRef = useRef([])
   const isMorphingRef = useRef(false)
   const preloadedRef = useRef(false)
+  const skipReadyRef = useRef(false)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
+
+  const nama = CONFIG.nama || ''
+  const titleEnd =
+    TITLE_START + Math.max(nama.length - 1, 0) * CHAR_STAGGER + CHAR_DURATION
+  const MORPH_AT = Math.max(4800, titleEnd + LINGER_AFTER_NAME)
 
   const clearAllTimers = useCallback(() => {
     timersRef.current.forEach((id) => {
@@ -76,9 +81,7 @@ export default function CinematicIntro({ onDone }) {
     timersRef.current = []
   }, [])
 
-  // ============================================================
-  // === 1. PRELOAD IMAGES IN PARALLEL ==========================
-  // ============================================================
+  // === 1. PRELOAD IMAGES ===
   useEffect(() => {
     const images = [
       CONFIG.fotoHero,
@@ -87,7 +90,6 @@ export default function CinematicIntro({ onDone }) {
     ].filter(Boolean)
 
     if (images.length === 0) {
-      setPreloaded(true)
       preloadedRef.current = true
       return
     }
@@ -95,10 +97,7 @@ export default function CinematicIntro({ onDone }) {
     let count = 0
     const onImgLoad = () => {
       count++
-      if (count >= images.length) {
-        setPreloaded(true)
-        preloadedRef.current = true
-      }
+      if (count >= images.length) preloadedRef.current = true
     }
 
     images.forEach((src) => {
@@ -110,17 +109,12 @@ export default function CinematicIntro({ onDone }) {
 
     // Safety fallback: maksimal 5 detik
     const fallbackTimer = setTimeout(() => {
-      setPreloaded(true)
       preloadedRef.current = true
     }, 5000)
-    timersRef.current.push(fallbackTimer)
-
     return () => clearTimeout(fallbackTimer)
   }, [])
 
-  // ============================================================
-  // === 2. MORPH TRIGGER (preload-aware) =======================
-  // ============================================================
+  // === 2. MORPH TRIGGER (preload-aware) ===
   const startMorph = useCallback(() => {
     if (isMorphingRef.current) return
     isMorphingRef.current = true
@@ -130,18 +124,16 @@ export default function CinematicIntro({ onDone }) {
       setPhase(PHASE_MORPH)
       const doneTimer = setTimeout(() => {
         setPhase(PHASE_DONE)
-        onDone()
+        onDoneRef.current?.()
       }, MORPH_DURATION)
       timersRef.current.push(doneTimer)
     }
 
-    // Kalau gambar sudah siap, langsung morph
     if (preloadedRef.current) {
       go()
       return
     }
 
-    // Kalau belum, tahan maksimal 1.5s sambil poll tiap 60ms
     const waitStart = Date.now()
     const checkInterval = setInterval(() => {
       if (preloadedRef.current || Date.now() - waitStart > 1500) {
@@ -150,72 +142,50 @@ export default function CinematicIntro({ onDone }) {
       }
     }, 60)
     timersRef.current.push(checkInterval)
-  }, [onDone, clearAllTimers])
+  }, [clearAllTimers])
 
-  // ============================================================
-  // === 3. TIMELINE ORCHESTRATION ==============================
-  // ============================================================
+  // === 3. TIMELINE (jalan sama di semua perangkat) ===
   useEffect(() => {
-    // Reduced motion: fade-out 400ms, langsung selesai
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    ) {
-      const fadeTimer = setTimeout(() => {
-        setPhase(PHASE_MORPH) // trigger .cine-morph → CSS fade-out
-        const doneTimer = setTimeout(() => {
-          setPhase(PHASE_DONE)
-          onDone()
-        }, 400)
-        timersRef.current.push(doneTimer)
-      }, 200)
-      timersRef.current.push(fadeTimer)
-      return () => clearAllTimers()
-    }
-
     const schedule = (fn, delay) => {
       const id = setTimeout(fn, delay)
       timersRef.current.push(id)
     }
 
     schedule(() => setPhase(PHASE_GLOW),   300)
-    schedule(() => setPhase(PHASE_TITLE),  1000)
+    schedule(() => setPhase(PHASE_TITLE),  TITLE_START)
     schedule(() => setPhase(PHASE_TAG),    2000)
     schedule(() => setPhase(PHASE_HEART),  2800)
     schedule(() => setPhase(PHASE_LINGER), 3800)
-    schedule(() => startMorph(),           4800)
+    schedule(() => { skipReadyRef.current = true }, titleEnd)
+    schedule(() => startMorph(), MORPH_AT)
 
     return () => clearAllTimers()
-  }, [startMorph, onDone, clearAllTimers])
+  }, [startMorph, clearAllTimers, titleEnd, MORPH_AT])
 
-  // ============================================================
-  // === 4. KEYBOARD SKIP (Enter / Space / Escape) ==============
-  // ============================================================
+  // === 4. KEYBOARD SKIP ===
   useEffect(() => {
     const onKey = (e) => {
-      if (['Enter', ' ', 'Escape'].includes(e.key) && phase < PHASE_MORPH) {
+      if (
+        ['Enter', ' ', 'Escape'].includes(e.key) &&
+        skipReadyRef.current &&
+        !isMorphingRef.current
+      ) {
         e.preventDefault()
         startMorph()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, startMorph])
+  }, [startMorph])
 
-  // ============================================================
-  // === 5. TAP / CLICK SKIP ====================================
-  // ============================================================
+  // === 5. TAP SKIP (baru aktif setelah nama selesai) ===
   const handleUserTap = () => {
-    if (phase < PHASE_MORPH) startMorph()
+    if (skipReadyRef.current && !isMorphingRef.current) startMorph()
   }
 
-  // ============================================================
-  // === RENDER =================================================
-  // ============================================================
   if (phase === PHASE_DONE) return null
 
   const particles = seededParticles(24)
-  const nama = CONFIG.nama || ''
 
   return (
     <div
@@ -232,17 +202,13 @@ export default function CinematicIntro({ onDone }) {
       tabIndex={0}
       aria-label="Ketuk atau tekan Enter untuk melanjutkan"
     >
-      {/* Radial soft vignette overlay */}
       <div className="cine-vignette" />
 
-      {/* Letterbox bars — cinematic aspect (naik saat morph) */}
       <div className="cine-letterbox cine-letterbox-top" aria-hidden="true" />
       <div className="cine-letterbox cine-letterbox-bottom" aria-hidden="true" />
 
-      {/* Film grain overlay */}
       <div className="cine-grain" aria-hidden="true" />
 
-      {/* Floating candlelight embers / particles */}
       <div className="cine-particles" aria-hidden="true">
         {particles.map((p, i) => (
           <span
@@ -260,21 +226,17 @@ export default function CinematicIntro({ onDone }) {
         ))}
       </div>
 
-      {/* Center cinematic typography */}
       <div className="cine-center">
-        {/* Top delicate ornament line */}
         <div className="cine-line cine-line-top" />
 
-        {/* Cinematic eyebrow / label */}
         <p className="cine-pretitle">a film about us</p>
 
-        {/* Hero romantic name — letter-by-letter reveal */}
         <h1 className="cine-title" aria-label={nama}>
           {nama.split('').map((ch, i) => (
             <span
               key={i}
               className="cine-title-char"
-              style={{ animationDelay: `${1000 + i * 40}ms` }}
+              style={{ animationDelay: `${TITLE_START + i * CHAR_STAGGER}ms` }}
               aria-hidden="true"
             >
               {ch === ' ' ? '\u00A0' : ch}
@@ -282,20 +244,15 @@ export default function CinematicIntro({ onDone }) {
           ))}
         </h1>
 
-        {/* Romantic handwriting tagline */}
         <p className="cine-subtitle">sebuah cerita tentang kita...</p>
 
-        {/* Heart icon pulse */}
         <div className="cine-heart" aria-hidden="true">♥</div>
 
-        {/* Bottom delicate ornament line */}
         <div className="cine-line cine-line-bottom" />
       </div>
 
-      {/* Elegant date label at bottom */}
       <p className="cine-date">{CONFIG.tanggalFull || '2026'}</p>
 
-      {/* Subtle skip prompt */}
       <span className="cine-skip-hint">ketuk untuk lanjut</span>
     </div>
   )
