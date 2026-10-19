@@ -6200,9 +6200,6 @@ section:has(.cake-scrap) {
   }
 }
 
-.slide {
-  animation: slideFadeIn 0.3s ease-out both !important;
-}
 
 /* Slide Navigation Buttons Hover & Active Tactile Feel */
 .slide-nav .btn {
@@ -6885,104 +6882,136 @@ button:focus-visible,
 }
 
 /* ========================================================================== */
-/* === FINAL PREMIUM ANIMATION SYSTEM (MOBILE & DESKTOP) ==================== */
+/* === FINAL POLISH: TACTILE SCRAPBOOK & PERFORMANCE (NO AI-SLOP) =========== */
 /* ========================================================================== */
 
-/* 1. RESET & BASE PERFORMANCE */
-* {
-  -webkit-tap-highlight-color: transparent; /* Hilangkan highlight biru saat di-tap di HP */
-}
-
-/* Mencegah Layout Shift (CLS) pada gambar */
+/* 1. FIX LAYOUT SHIFT (CLS) & IMAGE CRASH */
 .netflix-card img, 
 .netflix-card-wide img, 
 .netflix-card-tall img,
-.hero-polaroid-img {
-  aspect-ratio: 16/9;
+.hero-polaroid-img,
+.ourstory-photo {
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  background-color: var(--bg-2);
+  background-color: var(--bg-2); /* Warna fallback sebelum gambar load */
+  display: block;
 }
-.netflix-card-tall img { aspect-ratio: 2/3; }
-.hero-polaroid-img { aspect-ratio: 1/1; }
+.netflix-card-tall img { aspect-ratio: 2 / 3; }
+.hero-polaroid-img { aspect-ratio: 1 / 1; }
 
-/* 2. SCROLL REVEAL & STAGGERED ENTRANCE (Premium Feel) */
-@media (prefers-reduced-motion: no-preference) {
-  /* Animasi muncul dari bawah yang smooth (untuk React reveal) */
-  .reveal {
-    opacity: 0;
-    transform: translateY(16px); /* Jarak 16px sesuai standar premium */
-    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), 
-                transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-    will-change: opacity, transform;
-  }
-
-  .reveal.in {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Efek Stagger (Muncul Bergantian) untuk Grid/Kartu */
-  .reasons-note, .reward-card, .netflix-card {
-    animation: premiumFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  
-  /* Delay bertingkat agar tidak muncul bersamaan */
-  .reasons-note:nth-child(1), .reward-card:nth-child(1) { animation-delay: 0.05s; }
-  .reasons-note:nth-child(2), .reward-card:nth-child(2) { animation-delay: 0.10s; }
-  .reasons-note:nth-child(3), .reward-card:nth-child(3) { animation-delay: 0.15s; }
-  .reasons-note:nth-child(4), .reward-card:nth-child(4) { animation-delay: 0.20s; }
+/* 2. HAPUS GLASSMORPHISM (Ganti jadi kertas solid ala Scrapbook) */
+.netflix-navbar, 
+.search-panel, 
+.notif-panel, 
+.profile-panel, 
+.comment-panel,
+.photobooth-modal-close {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--paper) !important;
+  border: 2px solid var(--line) !important;
 }
 
-/* 3. MICRO-INTERACTIONS (Tombol & Sentuhan) */
-/* Efek tombol ditekan: Responsif, tidak menggeser layout, tanpa delay */
-.btn:active, 
-.quiz-opt:active, 
-.lock-key-btn:active, 
-.reward-card:active,
-.ig-nav-btn:active {
-  transform: scale(0.96) !important;
-  transition: transform 0.1s ease !important;
+/* 3. GANTI SHADOW BERLEBIH JADI BORDER TEGAS (Lebih Ringan & Estetik) */
+.hero-polaroid, 
+.reasons-note, 
+.reward-card, 
+.ourstory-note,
+.cd-note {
+  box-shadow: 2px 2px 0 rgba(200, 49, 46, 0.1) !important; /* Shadow kaku ala buku */
+  border: 2px dashed var(--accent); /* Border putus-putus estetik */
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease !important;
 }
 
-/* Efek Hover hanya untuk perangkat dengan Mouse (Desktop/Laptop) */
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(200, 49, 46, 0.15);
-  }
-  
-  .hero-polaroid:hover {
+  .hero-polaroid:hover, 
+  .reasons-note:hover, 
+  .reward-card:hover, 
+  .ourstory-note:hover {
     transform: translateY(-4px) rotate(1deg);
+    box-shadow: 4px 6px 0 rgba(200, 49, 46, 0.15) !important;
   }
 }
 
-/* 4. SMOOTH MOBILE ANIMATIONS (Kue, Stiker, & Lilin) */
+/* 4. KONTRAS TEKS (Aksesibilitas) */
+:root {
+  --text-soft: #5a4a3a; /* Lebih gelap dari sebelumnya agar mudah dibaca */
+  --muted: #8a7a6a;
+}
+
+/* 5. ANIMASI MASUK (Staggered & Smooth, Tanpa AI-Slop) */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
-  /* Matikan getaran di Lock Screen */
+  /* Matikan getaran di Lock Screen & perhalus animasi */
   .lock-icon, .lock-tape, .lock-sticker {
     animation: none !important;
   }
 
-  /* Stiker melayang dengan sangat halus (GPU Friendly) */
+  /* Animasi Stiker yang Halus (Hanya Transform & Opacity) */
   .cake-sticker, .hero-sticker, .ourstory-sticker {
-    animation: smoothFloat 4s ease-in-out infinite alternate !important;
+    animation: premiumFloat 4s ease-in-out infinite alternate !important;
     will-change: transform;
   }
 
-  /* Lilin goyang & api berkedip */
   .candle-group {
-    animation: smoothSway 2.5s ease-in-out infinite alternate !important;
+    animation: premiumSway 2s ease-in-out infinite alternate !important;
     transform-origin: center bottom !important;
   }
   .flame-group {
-    animation: smoothFlicker 0.6s ease-in-out infinite alternate !important;
+    animation: premiumFlicker 0.6s ease-in-out infinite alternate !important;
     transform-origin: center bottom !important;
+  }
+
+  /* Efek Kartu Muncul Bergantian (Stagger) */
+  .reasons-note, .reward-card, .hero-polaroid, .ourstory-note {
+    animation: premiumFadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+  }
+  .reasons-note:nth-child(2), .reward-card:nth-child(2) { animation-delay: 0.1s !important; }
+  .reasons-note:nth-child(3), .reward-card:nth-child(3) { animation-delay: 0.15s !important; }
+  .reasons-note:nth-child(4), .reward-card:nth-child(4) { animation-delay: 0.2s !important; }
+
+  /* Efek Tombol Ditekan (Haptic Visual) */
+  .btn:active, .lock-key-btn:active, .ig-nav-btn:active, .quiz-opt:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.1s ease !important;
   }
 }
 
-/* 5. PAGE LOAD / HERO ANIMATIONS (Hanya sekali jalan) */
-.hero-title-scrap, .opening-name-scrap {
-  animation: premiumHeroFade 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+@keyframes premiumFloat {
+  0%   { transform: translateY(0) rotate(-2deg); }
+  100% { transform: translateY(-8px) rotate(2deg); }
+}
+@keyframes premiumSway {
+  0%   { transform: rotate(-2deg); }
+  100% { transform: rotate(2deg); }
+}
+@keyframes premiumFlicker {
+  0%   { transform: scale(1) translateY(0); opacity: 0.9; }
+  100% { transform: scale(1.05) translateY(-2px); opacity: 1; }
+}
+@keyframes premiumFadeUp {
+  0%   { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 6. REDUCED MOTION (Hormati pengaturan HP) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ========================================================================== */
@@ -7678,11 +7707,6 @@ button,
 */
 
 /* 1. Transisi slide: fade halus saja di semua layar (tanpa flip 3D) */
-.slide-mode { perspective: none !important; }
-.slide {
-  transform: none !important;
-  will-change: auto !important;
-}
 
 @media (prefers-reduced-motion: no-preference) {
 
@@ -8012,4 +8036,84 @@ body::before { display: none !important; }
 }
 .sb-intro .sb-greet-line3 {
   transition: clip-path 800ms ease-in-out 1700ms, opacity 100ms ease 1700ms !important;
+}
+
+/* ========================================================================== */
+/* === 39. SURAT CINTA — MUNCUL PERLAHAN BARIS DEMI BARIS =================== */
+/* ========================================================================== */
+/*
+  TEMPEL PALING BAWAH, setelah patch #1 sampai #7.
+  Mau lebih lambat/cepat? Ubah angka di bagian "TUNING".
+*/
+
+@keyframes letterBox {
+  from { opacity: 0; scale: 0.96; translate: 0 24px; }
+  to   { opacity: 1; scale: 1;    translate: 0 0; }
+}
+@keyframes letterLine {
+  from { opacity: 0; filter: blur(4px); translate: 0 8px; }
+  to   { opacity: 1; filter: blur(0);   translate: 0 0; }
+}
+
+/* Kertas surat muncul dulu */
+.letter {
+  animation: letterBox 1s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+
+/* Tiap baris menyusul satu per satu.
+   TUNING: 1.6s = lama satu baris muncul, 1.2s = jarak antar baris,
+   0.9s = jeda sebelum baris pertama. */
+.letter p {
+  animation: letterLine 1.6s ease-out both !important;
+  animation-delay: calc(0.9s + var(--si, 0) * 1.2s) !important;
+}
+
+/* Surat dengan lebih dari 8 paragraf tetap berurutan */
+.letter p:nth-child(n+9) { --si: 8; }
+
+/* Ruang di bawah surat supaya baris terakhir tidak tertutup tombol Balik/Lanjut */
+section:has(.env) {
+  padding-bottom: 170px !important;
+}
+
+
+:root { --nav-bottom: 52px; } /* makin besar = makin naik */
+
+.slide-nav { bottom: calc(var(--nav-bottom) + env(safe-area-inset-bottom, 0px)); }
+
+body:has(.reasons-scrap) .slide-nav,
+body:has(.cake-scrap) .slide-nav,
+body:has(.rewards-section) .slide-nav,
+body:has(.env) .slide-nav,
+body:has(.surprise) .slide-nav {
+  bottom: calc(var(--nav-bottom) + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* ========================================================================== */
+/* === FIX GLITCH TRANSISI HALAMAN (SMOOTH SLIDE) =========================== */
+/* ========================================================================== */
+
+/* 1. Matikan animasi CSS lama yang nabrak Framer Motion */
+.slide {
+  animation: none !important; 
+}
+
+/* 2. Beri GPU Hint (will-change) khusus saat transisi */
+.slide-mode {
+  perspective: 2000px;
+  perspective-origin: center;
+}
+
+.slide {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* 3. Hilangkan getaran (jank) di HP saat transisi */
+@media (max-width: 768px) {
+  .slide {
+    transform-style: flat;
+    will-change: opacity; /* Slide 2D di HP cuma butuh opacity */
+  }
 }

@@ -59,8 +59,16 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
 
-  // Cek apakah device adalah Mobile / Tablet
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  // FIX 1: Pindahkan deteksi isMobile ke dalam state agar reaktif saat resize
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  )
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const next = () => setCurrent((i) => Math.min(i + 1, SECTIONS.length - 1))
   const prev = () => setCurrent((i) => Math.max(i - 1, 0))
@@ -203,18 +211,23 @@ export default function App() {
         </>
       )}
 
-      {/* === SLIDE TRANSITION (FLIP BOOK DI DESKTOP, SLIDE DI MOBILE) === */}
+      {/* === SLIDE TRANSITION PREMIUM (ANTI-GLITCH) === */}
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
           className={`slide ${section.scrollable ? 'scrollable' : ''}`}
           
-          // Deteksi perangkat: Mobile pakai 2D slide, Desktop pakai 3D rotate
-          initial={isMobile ? { opacity: 0, x: 50, scale: 0.98 } : { rotateY: 90, opacity: 0, transformOrigin: 'left center' }}
-          animate={isMobile ? { opacity: 1, x: 0, scale: 1 } : { rotateY: 0, opacity: 1, transformOrigin: 'left center' }}
-          exit={isMobile ? { opacity: 0, x: -50, scale: 0.98 } : { rotateY: -90, opacity: 0, transformOrigin: 'right center' }}
+          // FIX 2: Hapus 'scale' di mobile, cukup geser (x) dan fade (opacity) murni.
+          // Ini bikin transisi HP dijamin 60fps tanpa getar.
+          initial={isMobile ? { opacity: 0, x: 30 } : { rotateY: 90, opacity: 0, transformOrigin: 'left center' }}
+          animate={isMobile ? { opacity: 1, x: 0 } : { rotateY: 0, opacity: 1, transformOrigin: 'left center' }}
+          exit={isMobile ? { opacity: 0, x: -30 } : { rotateY: -90, opacity: 0, transformOrigin: 'right center' }}
           
-          transition={{ duration: isMobile ? 0.35 : 0.6, ease: [0.32, 0.72, 0, 1] }}
+          // FIX 3: Easing premium, durasi pas (tidak terlalu cepat, tidak lambat)
+          transition={{ 
+            duration: isMobile ? 0.35 : 0.6, 
+            ease: [0.32, 0.72, 0, 1] 
+          }}
           
           style={{ 
             transformStyle: isMobile ? 'flat' : 'preserve-3d', 
@@ -384,4 +397,3 @@ export default function App() {
     </main>
   )
 }
-
